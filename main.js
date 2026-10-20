@@ -1,5 +1,7 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Tray, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, Tray, Menu, safeStorage } = require('electron');
 const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
 const { setSaturation, cleanup } = require('./saturation');
 const { uIOhook } = require('uiohook-napi');
 
@@ -7,6 +9,163 @@ let mainWindow = null;
 let currentMouseBind = null;
 let tray = null;
 let minimizeToTray = false;
+let licenseIsActive = false;
+
+const licenseConfigPath = path.join(__dirname, 'license-config.json');
+const getLicenseStatePath = () => path.join(app.getPath('userData'), 'license-state.dat');
+
+function getLicenseConfig() {
+  try {
+    const config = JSON.parse(fs.readFileSync(licenseConfigPath, 'utf8'));
+    if (typeof config.supabaseUrl !== 'string' || typeof config.supabaseAnonKey !== 'string') {
+      throw new Error('license-config.json precisa conter supabaseUrl e supabaseAnonKey.');
+    }
+
+    const url = config.supabaseUrl.trim().replace(/\/+$/, '');
+    const isLocalDevelopmentUrl = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(url);
+    if (!url || (!url.startsWith('https://') && !isLocalDevelopmentUrl) || !config.supabaseAnonKey.trim()) {
+      return null;
+    }
+
+    return { url, anonKey: config.supabaseAnonKey.trim() };
+  } catch (error) {
+    if (error.code !== 'ENOENT') console.error('Falha ao ler a configuração de licença:', error);
+    return null;
+  }
+}
+
+function readLicenseState() {
+  const licenseStatePath = getLicenseStatePath();
+  if (!fs.existsSync(licenseStatePath)) return null;
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error('A encriptação segura do Windows não está disponível.');
+  }
+
+  try {
+    const encrypted = fs.readFileSync(licenseStatePath);
+    const state = JSON.parse(safeStorage.decryptString(encrypted));
+    if (typeof state.licenseKey !== 'string' || typeof state.deviceId !== 'string') {
+      throw new Error('O ficheiro de licença está inválido.');
+    }
+    return state;
+  } catch (error) {
+    throw new Error(`Não foi possível ler a licença guardada: ${error.message}`);
+  }
+}
+
+function saveLicenseState(state) {
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error('A encriptação segura do Windows não está disponível.');
+  }
+  const licenseStatePath = getLicenseStatePath();
+  fs.mkdirSync(path.dirname(licenseStatePath), { recursive: true });
+  fs.writeFileSync(licenseStatePath, safeStorage.encryptString(JSON.stringify(state)));
+}
+
+async function validateLicenseKey(licenseKey, deviceId) {
+  const config = getLicenseConfig();
+  if (!config) return { valid: false, status: 'configuration_missing', message: 'A validação ainda não está configurada. Preenche license-config.json e publica a função validate-license do Supabase.' };
+
+  const normalizedKey = licenseKey.trim().toUpperCase();
+  if (!/^PF-[A-F0-9]{48}$/.test(normalizedKey)) {
+    return { valid: false, status: 'invalid_key', message: 'A chave de licença não é válida.' };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetch(`${config.url}/functions/v1/validate-license`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: config.anonKey,
+        Authorization: `Bearer ${config.anonKey}`
+      },
+      body: JSON.stringify({ key: normalizedKey, deviceId }),
+      signal: controller.signal
+    });
+
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error(`O servidor de licenças respondeu com uma resposta inválida (HTTP ${response.status}).`);
+    }
+
+    if (typeof result.valid !== 'boolean' || typeof result.status !== 'string') {
+      throw new Error(typeof result.message === 'string' ? result.message : `Falha no servidor de licenças (HTTP ${response.status}).`);
+    }
+    return result;
+  } catch (error) {
+    console.error('Falha na validação online da licença:', error);
+    if (error.name === 'AbortError') {
+      return { valid: false, status: 'network_error', message: 'A validação demorou demasiado. Verifica a ligação à internet e tenta novamente.' };
+    }
+    return { valid: false, status: 'network_error', message: `Não foi possível validar a licença: ${error.message}` };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function checkSavedLicense() {
+  licenseIsActive = false;
+  if (!getLicenseConfig()) {
+    return { valid: false, status: 'configuration_missing', message: 'A validação ainda não está configurada. Preenche license-config.json e publica a função validate-license do Supabase.' };
+  }
+  if (!safeStorage.isEncryptionAvailable()) {
+    return { valid: false, status: 'secure_storage_unavailable', message: 'O armazenamento seguro do Windows não está disponível.' };
+  }
+
+  let state;
+  try {
+    state = readLicenseState();
+  } catch (error) {
+    console.error(error);
+    return { valid: false, status: 'storage_error', message: error.message };
+  }
+  if (!state) return { valid: false, status: 'activation_required', message: 'Introduz a tua chave de licença para ativar este computador.' };
+
+  const result = await validateLicenseKey(state.licenseKey, state.deviceId);
+  licenseIsActive = result.valid === true;
+  return result;
+}
+
+ipcMain.handle('license:check', checkSavedLicense);
+
+ipcMain.handle('license:activate', async (_event, licenseKey) => {
+  licenseIsActive = false;
+  if (typeof licenseKey !== 'string' || licenseKey.length > 128) {
+    return { valid: false, status: 'invalid_key', message: 'Introduz uma chave de licença válida.' };
+  }
+  if (!getLicenseConfig()) {
+    return { valid: false, status: 'configuration_missing', message: 'A validação ainda não está configurada. Preenche license-config.json e publica a função validate-license do Supabase.' };
+  }
+  if (!safeStorage.isEncryptionAvailable()) {
+    return { valid: false, status: 'secure_storage_unavailable', message: 'O armazenamento seguro do Windows não está disponível.' };
+  }
+
+  let state;
+  try {
+    state = readLicenseState();
+  } catch (error) {
+    console.error(error);
+    return { valid: false, status: 'storage_error', message: error.message };
+  }
+
+  const deviceId = state?.deviceId || crypto.randomUUID();
+  const result = await validateLicenseKey(licenseKey, deviceId);
+  if (!result.valid) return result;
+
+  try {
+    saveLicenseState({ licenseKey: licenseKey.trim().toUpperCase(), deviceId });
+    licenseIsActive = true;
+    return result;
+  } catch (error) {
+    console.error('Falha ao guardar a licença:', error);
+    return { valid: false, status: 'storage_error', message: `A licença foi validada, mas não pôde ser guardada: ${error.message}` };
+  }
+});
+
 function createWindow () {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -24,7 +183,7 @@ function createWindow () {
     icon: path.join(__dirname, 'GPRO SUPER.png') // Um icone temporario baseado nas imagens existentes
   });
 
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
   
   mainWindow.on('close', (event) => {
     if (minimizeToTray && !app.isQuiting) {
@@ -52,6 +211,7 @@ function createWindow () {
 }
 
 ipcMain.on('set-autostart', (event, enabled) => {
+  if (!licenseIsActive) return;
   app.setLoginItemSettings({
     openAtLogin: enabled,
     path: app.getPath('exe')
@@ -59,6 +219,7 @@ ipcMain.on('set-autostart', (event, enabled) => {
 });
 
 ipcMain.on('set-min-tray', (event, enabled) => {
+  if (!licenseIsActive) return;
   minimizeToTray = enabled;
 });
 
@@ -84,6 +245,7 @@ ipcMain.on('window-close', (event) => {
 });
 
 ipcMain.on('launch-fivem', (event, options = {}) => {
+  if (!licenseIsActive) return;
   const { exec } = require('child_process');
   const fs = require('fs');
   
@@ -133,6 +295,7 @@ ipcMain.on('launch-fivem', (event, options = {}) => {
 });
 
 ipcMain.on('apply-sensi', (event, options) => {
+  if (!licenseIsActive) return;
   const { exec } = require('child_process');
   const fs = require('fs');
   const path = require('path');
@@ -221,6 +384,7 @@ const precisionScripts = {
 };
 
 ipcMain.on('apply-precision-tweaks', (event, selectedTweaks) => {
+  if (!licenseIsActive) return;
   const { exec } = require('child_process');
   const path = require('path');
   const fs = require('fs');
@@ -251,6 +415,7 @@ ipcMain.on('apply-precision-tweaks', (event, selectedTweaks) => {
 });
 
 ipcMain.on('revert-precision-tweaks', (event) => {
+  if (!licenseIsActive) return;
   const { exec } = require('child_process');
   const path = require('path');
   const fs = require('fs');
@@ -267,6 +432,7 @@ ipcMain.on('revert-precision-tweaks', (event) => {
 
 let crosshairWin = null;
 ipcMain.on('apply-mira', (event, config) => {
+  if (!licenseIsActive) return;
   if (!crosshairWin) {
     const { screen } = require('electron');
     const primaryDisplay = screen.getPrimaryDisplay();
@@ -288,7 +454,7 @@ ipcMain.on('apply-mira', (event, config) => {
     crosshairWin.setIgnoreMouseEvents(true);
     crosshairWin.setAlwaysOnTop(true, 'screen-saver');
     crosshairWin.maximize();
-    crosshairWin.loadFile('crosshair.html');
+    crosshairWin.loadFile(path.join(__dirname, 'crosshair.html'));
   } else {
     crosshairWin.showInactive();
   }
@@ -300,12 +466,14 @@ ipcMain.on('apply-mira', (event, config) => {
 });
 
 ipcMain.on('update-crosshair', (event, config) => {
+  if (!licenseIsActive) return;
   if (crosshairWin) {
     crosshairWin.webContents.send('update-crosshair', config);
   }
 });
 
 ipcMain.on('set-mira-bind', (event, bindInfo) => {
+  if (!licenseIsActive) return;
   globalShortcut.unregisterAll();
   currentMouseBind = null;
 
@@ -356,12 +524,14 @@ app.whenReady().then(() => {
 });
 
 ipcMain.on('change-saturation', (event, value) => {
+  if (!licenseIsActive) return;
   setSaturation(value);
 });
 
 const keyboardTweaks = require('./keyboard-tweaks');
 
 ipcMain.on('apply-keyboard-tweaks', async (event, tweaks) => {
+  if (!licenseIsActive) return;
   try {
     if (tweaks.precision) await keyboardTweaks.aplicarPerfilPrecisao({ incluirPrioridade: tweaks.input, incluirUsb: tweaks.usb });
     else if (tweaks.registros) await keyboardTweaks.aplicarAjustesRegistro();
@@ -385,6 +555,7 @@ ipcMain.on('apply-keyboard-tweaks', async (event, tweaks) => {
 });
 
 ipcMain.on('revert-keyboard-tweaks', async (event) => {
+  if (!licenseIsActive) return;
   try {
     await keyboardTweaks.restaurarPadrao();
     event.sender.send('revert-keyboard-tweaks-reply', { success: true });

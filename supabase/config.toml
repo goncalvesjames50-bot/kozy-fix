@@ -1,0 +1,4 @@
+project_id = "precisionfix"
+
+[functions.validate-license]
+verify_jwt = false

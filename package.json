@@ -33,6 +33,7 @@
     "files": [
       "**/*",
       "!dist/**",
+      "!kozyfix.exe",
       "!*.zip",
       "!.npmrc",
       "!diff_raw.txt",
@@ -43,7 +44,9 @@
       "!prepare_assets.js",
       "!set_admin.js",
       "!update_build_config.js",
-      "!Screenshot_2.png"
+      "!Screenshot_2.png",
+      "!supabase/**",
+      "!SUPABASE-LICENSING.md"
     ],
     "asarUnpack": [
       "vibranceGUI.exe",
@@ -53,7 +56,7 @@
     "npmRebuild": false,
     "win": {
       "target": "nsis",
-      "icon": "app.ico",
+      "icon": "logokozy.ico",
       "requestedExecutionLevel": "requireAdministrator"
     },
     "nsis": {

@@ -773,6 +773,57 @@ input[type=range]::-webkit-slider-thumb:hover {
     border: none;
     border-radius: 50%;
   }
+
+  #license-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 99998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(6, 6, 8, 0.97);
+    backdrop-filter: blur(12px);
+    -webkit-app-region: no-drag;
+  }
+  #license-screen[hidden] { display: none; }
+  .license-card {
+    width: min(440px, 100%);
+    padding: 32px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    background: #0d0d10;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+  }
+  .license-card h1 { margin: 0 0 8px; font: 700 22px 'Space Grotesk', sans-serif; }
+  .license-card p { color: #a0a0aa; font: 13px/1.6 'Space Grotesk', sans-serif; }
+  #license-key {
+    width: 100%;
+    margin: 18px 0 12px;
+    padding: 14px;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 8px;
+    outline: none;
+    background: #08080a;
+    color: #fff;
+    font: 13px 'JetBrains Mono', monospace;
+  }
+  #license-key:focus { border-color: rgba(255,255,255,0.55); }
+  #license-activate, #license-exit {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 8px;
+    background: #f2f3f5;
+    color: #09090b;
+    font: 700 13px 'Space Grotesk', sans-serif;
+    cursor: pointer;
+  }
+  #license-activate:disabled { cursor: wait; opacity: 0.6; }
+  #license-exit { margin-top: 10px; background: transparent; color: #ccc; }
+  #license-message { min-height: 20px; margin: 12px 0 0; font-size: 12px; }
+  #license-message.error { color: #ff7777; }
+  #license-message.success { color: #7be0a0; }
 </style>
 </head>
 <body class="booting">
@@ -785,6 +836,20 @@ input[type=range]::-webkit-slider-thumb:hover {
   </div>
   <div class="boot-text" id="boot-text">INICIALIZANDO SISTEMA...</div>
 </div>
+
+<section id="license-screen" aria-labelledby="license-title">
+  <div class="license-card">
+    <div style="color:#fff;font:800 11px 'JetBrains Mono',monospace;letter-spacing:3px;margin-bottom:18px;">PRECISIONFIX</div>
+    <h1 id="license-title">Ativar licença</h1>
+    <p>Introduz a tua chave para desbloquear o programa. Cada chave pode ser ativada num único computador e não tem expiração automática.</p>
+    <form id="license-form">
+      <input id="license-key" type="text" maxlength="128" autocomplete="off" spellcheck="false" placeholder="PF-..." aria-label="Chave de licença">
+      <button id="license-activate" type="submit">Ativar licença</button>
+    </form>
+    <p id="license-message" role="status" aria-live="polite">A verificar licença...</p>
+    <button id="license-exit" type="button">Sair</button>
+  </div>
+</section>
 
 <div class="app-container">
   <div id="particles-js" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
@@ -1179,7 +1244,7 @@ function applyKeyboardTweaks(tweaksOverride) {
         <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;">
           <div style="display: flex; align-items: center; gap: 20px;">
             <div style="width: 50px; height: 50px; background: rgba(248,107,18,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(248,107,18,0.3);">
-              <svg style="width:24px; height:24px; fill:#F86B12;" viewBox="0 0 24 24"><path d="M22.4 24h-5.225c-.117 0-.455-1.127-1.026-3.375-1.982-6.909-3.124-10.946-3.417-12.12l3.37-3.325h.099c.454 1.42 2.554 7.676 6.299 18.768ZM12.342 7.084h-.048a3.382 3.385 0 0 1-.098-.492v-.098a102.619 102.715 0 0 1 3.272-3.275c.13.196.196.356.196.491v.05a140.694 140.826 0 0 1-3.322 3.324ZM5.994 10.9h-.05c.67-2.12 1.076-3.209 1.223-3.275L14.492.343c.08 0 .258.524.533 1.562zm1.37-4.014h-.05C8.813 2.342 9.612.048 9.71 0h4.495v.05a664.971 664.971 0 0 1-6.841 6.839Zm-2.69 7.874h-.05c.166-.798.554-1.418 1.174-1.855a312.918 313.213 0 0 1 5.71-5.717h.05c-.117.672-.375 1.175-.781 1.52zM1.598 24l-.098-.05c1.399-4.172 2.148-6.322 2.248-6.45l6.74-6.694v.05C10.232 11.88 8.974 16.263 6.73 24Z"/></svg>
+              <svg style="width:24px; height:24px; fill:#F86B12;" viewBox="0 0 24 24" role="img" aria-label="FiveM"><path d="M22.4 24h-5.225c-.117 0-.455-1.127-1.026-3.375-1.982-6.909-3.124-10.946-3.417-12.12l3.37-3.325h.099c.454 1.42 2.554 7.676 6.299 18.768ZM12.342 7.084h-.048a3.382 3.385 0 0 1-.098-.492v-.098a102.619 102.715 0 0 1 3.272-3.275c.13.196.196.356.196.491v.05a140.694 140.826 0 0 1-3.322 3.324ZM5.994 10.9h-.05c.67-2.12 1.076-3.209 1.223-3.275L14.492.343c.08 0 .258.524.533 1.562zm1.37-4.014h-.05C8.813 2.342 9.612.048 9.71 0h4.495v.05a664.971 664.971 0 0 1-6.841 6.839Zm-2.69 7.874h-.05c.166-.798.554-1.418 1.174-1.855a312.918 313.213 0 0 1 5.71-5.717h.05c-.117.672-.375 1.175-.781 1.52zM1.598 24l-.098-.05c1.399-4.172 2.148-6.322 2.248-6.45l6.74-6.694v.05C10.232 11.88 8.974 16.263 6.73 24Z"/></svg>
             </div>
             <div>
               <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Jogar FiveM</h2>
@@ -2028,12 +2093,6 @@ try {
       setTimeout(() => { if(bootText) bootText.textContent = 'ESTABELECENDO CONEXÃO COM HARDWARE...'; }, 900);
       setTimeout(() => { if(bootText) bootText.textContent = 'SISTEMA PRONTO.'; }, 1400);
     }, 100);
-    
-    try {
-      const audioBemVindo = new Audio('bem vindo.mp3');
-      audioBemVindo.volume = 0.8;
-      audioBemVindo.play().catch(e => console.log(e));
-    } catch(e) {}
     
     setTimeout(() => {
       if (bootScreen) bootScreen.classList.add('hidden');
@@ -3322,6 +3381,85 @@ window.addEventListener('DOMContentLoaded', () => {
     ipc.send('set-min-tray', minTrayEnabled);
   }
 });
+</script>
+<script>
+(() => {
+  const { ipcRenderer } = require('electron');
+  const screen = document.getElementById('license-screen');
+  const form = document.getElementById('license-form');
+  const input = document.getElementById('license-key');
+  const button = document.getElementById('license-activate');
+  const message = document.getElementById('license-message');
+  let welcomeAudioPlayed = false;
+
+  function setMessage(text, type = '') {
+    message.textContent = text;
+    message.className = type;
+  }
+
+  function unlock(result) {
+    screen.hidden = true;
+    setMessage(result.message || 'Licença ativa.', 'success');
+    if (!welcomeAudioPlayed) {
+      welcomeAudioPlayed = true;
+      const audioBemVindo = new Audio('ola guloso.mp3');
+      audioBemVindo.volume = 0.8;
+      audioBemVindo.play().catch(error => console.warn('Não foi possível reproduzir o áudio de boas-vindas:', error));
+    }
+    const autoStartEnabled = localStorage.getItem('auto_start_enabled') === 'true';
+    const minTrayEnabled = localStorage.getItem('min_tray_enabled') === 'true';
+    ipcRenderer.send('set-autostart', autoStartEnabled);
+    ipcRenderer.send('set-min-tray', minTrayEnabled);
+  }
+
+  async function checkLicense(showGate = true) {
+    if (showGate) {
+      screen.hidden = false;
+      setMessage('A verificar licença guardada...');
+    }
+    try {
+      const result = await ipcRenderer.invoke('license:check');
+      if (result.valid) {
+        unlock(result);
+      } else {
+        screen.hidden = false;
+        input.value = '';
+        input.focus();
+        setMessage(result.message || 'Introduz uma chave de licença válida.', 'error');
+      }
+    } catch (error) {
+      console.error('Erro ao verificar licença:', error);
+      screen.hidden = false;
+      setMessage(`Não foi possível verificar a licença: ${error.message}`, 'error');
+    }
+  }
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    button.disabled = true;
+    input.disabled = true;
+    setMessage('A validar a chave online...');
+    try {
+      const result = await ipcRenderer.invoke('license:activate', input.value);
+      if (result.valid) {
+        unlock(result);
+      } else {
+        setMessage(result.message || 'Não foi possível ativar esta chave.', 'error');
+      }
+    } catch (error) {
+      console.error('Erro ao ativar licença:', error);
+      setMessage(`Não foi possível ativar a licença: ${error.message}`, 'error');
+    } finally {
+      button.disabled = false;
+      input.disabled = false;
+    }
+  });
+
+  document.getElementById('license-exit').addEventListener('click', () => ipcRenderer.send('window-close'));
+
+  checkLicense();
+  window.setInterval(() => checkLicense(false), 5 * 60 * 1000);
+})();
 </script>
 <script>
 const GAME_PROFILE_STORAGE_KEY = 'gameProfiles';

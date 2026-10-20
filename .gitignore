@@ -1,6 +1,7 @@
 node_modules/
 dist/
 release/
+supabase/.temp/
 
 .env
 .env.*
