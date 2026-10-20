@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent !important;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+    }
+    img {
+    }
+  </style>
+</head>
+<body>
+  <div id="crosshair-wrapper" style="display: none; justify-content: center; align-items: center; width: 100%; height: 100%;">
+    <div id="crosshair-container" style="display: flex; justify-content: center; align-items: center; background-color: #ffffff; -webkit-mask-image: url('Layer.png'); -webkit-mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; transform: scale(1, 1); opacity: 1;">
+      <img src="Layer.png" style="opacity: 0; display: block;">
+    </div>
+  </div>
+  <script>
+    const { ipcRenderer } = require('electron');
+    ipcRenderer.on('update-crosshair', (event, config) => {
+      const container = document.getElementById('crosshair-container');
+      const wrapper = document.getElementById('crosshair-wrapper');
+      if (container && wrapper) {
+        if (config.opacity !== undefined) container.style.opacity = config.opacity;
+        if (config.color !== undefined) container.style.backgroundColor = config.color;
+        
+        if (config.shape !== undefined) {
+          container.style.webkitMaskImage = `url('${config.shape}')`;
+          // Mantém a imagem original para preservar a dimensão
+          container.querySelector('img').src = 'Layer.png';
+        }
+        
+        let scaleX = config.scaleX !== undefined ? config.scaleX : 1;
+        let scaleY = config.scaleY !== undefined ? config.scaleY : 1;
+        let posX = config.posX !== undefined ? config.posX : 0;
+        let posY = config.posY !== undefined ? config.posY : 0;
+        
+        container.style.transform = `translate(${posX}px, ${posY}px) scale(${scaleX}, ${scaleY})`;
+        
+        if (config.hasOutline) {
+           let thickness = config.outlineThickness || 1;
+           let color = config.outlineColor || '#000000';
+           wrapper.style.filter = `drop-shadow(0 0 ${thickness}px ${color}) drop-shadow(0 0 ${thickness}px ${color}) drop-shadow(0 0 ${thickness}px ${color})`;
+        } else {
+           wrapper.style.filter = 'none';
+        }
+      }
+    });
+
+    ipcRenderer.on('set-visibility', (event, visible) => {
+      const wrapper = document.getElementById('crosshair-wrapper');
+      if (wrapper) {
+        wrapper.style.display = visible ? 'flex' : 'none';
+      }
+    });
+  </script>
+</body>
+</html>

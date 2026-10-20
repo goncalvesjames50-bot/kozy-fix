@@ -1,0 +1,68 @@
+{
+  "name": "precisionfix",
+  "productName": "PrecisionFix",
+  "version": "1.7.1",
+  "description": "PrecisionFix - otimização de mouse, teclado, rede e FiveM",
+  "main": "main.js",
+  "author": "PrecisionFix",
+  "license": "ISC",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "assets": "node prepare_assets.js",
+    "build": "electron-builder --win nsis",
+    "build:portable": "electron-builder --win portable"
+  },
+  "dependencies": {
+    "jimp": "^1.6.1",
+    "koffi": "^3.1.0",
+    "sudo-prompt": "^9.2.1",
+    "uiohook-napi": "^1.5.5"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.precisionfix.app",
+    "productName": "PrecisionFix",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "**/*",
+      "!dist/**",
+      "!*.zip",
+      "!.npmrc",
+      "!diff_raw.txt",
+      "!original_chunk_*.txt",
+      "!generate_*.js",
+      "!fix-mice.js",
+      "!transform.js",
+      "!prepare_assets.js",
+      "!set_admin.js",
+      "!update_build_config.js",
+      "!Screenshot_2.png"
+    ],
+    "asarUnpack": [
+      "vibranceGUI.exe",
+      "node_modules/koffi/**",
+      "node_modules/uiohook-napi/**"
+    ],
+    "npmRebuild": false,
+    "win": {
+      "target": "nsis",
+      "icon": "app.ico",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PrecisionFix"
+    }
+  }
+}

@@ -1,0 +1,3531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PrecisionFix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --theme-color: var(--theme-color);
+  }
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-color: #060608;
+  --sidebar-bg: #09090b;
+  --primary-color: #F2F3F5;
+  --text-main: #ffffff;
+  --text-muted: #666670;
+  --border-color: rgba(255,255,255,0.04);
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
+}
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  color: var(--text-main);
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+* { box-sizing: border-box; }
+
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.app-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  font-family: 'Space Grotesk', sans-serif;
+  background-color: var(--bg-color);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+  width: 240px;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  position: relative;
+  border-radius: 12px 0 0 12px;
+}
+
+.logo-container {
+  padding: 0 20px;
+  margin-bottom: 20px;
+}
+.logo-text {
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+.logo-version {
+  color: var(--primary-color);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.optimization-progress {
+  padding: 0 20px;
+  margin-bottom: 30px;
+}
+.opt-title {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+.opt-bar {
+  height: 4px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 2px;
+  position: relative;
+  margin-bottom: 5px;
+}
+.opt-bar-fill {
+  position: absolute;
+  top: 0; left: 0; height: 100%; width: 100%;
+  background: var(--primary-color);
+  border-radius: 2px;
+  box-shadow: 0 0 10px var(--primary-color);
+}
+.opt-status { font-size: 10px; color: var(--text-muted); }
+
+.nav-menu {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 10px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.02);
+  color: #ccc;
+}
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-main);
+}
+.nav-item.active .nav-icon { fill: var(--primary-color); }
+.nav-icon { width: 16px; height: 16px; fill: var(--text-muted); transition: fill 0.2s; }
+
+.user-profile {
+  margin: 0 10px;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.avatar {
+  width: 35px; height: 35px;
+  background: #111;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--primary-color); font-weight: 800;
+}
+.user-info { display: flex; flex-direction: column; }
+.user-name { font-size: 12px; font-weight: 800; }
+.user-sub { font-size: 9px; color: var(--text-muted); }
+
+/* --- MAIN CONTENT --- */
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* TOP BAR */
+.top-bar {
+  height: 50px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  -webkit-app-region: drag; /* Draggable area */
+}
+
+.system-stats {
+  display: flex;
+  gap: 30px;
+  -webkit-app-region: no-drag;
+}
+.stat-box { display: flex; align-items: center; gap: 8px; }
+.stat-circle {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: var(--text-main);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: bold;
+}
+.stat-info { display: flex; flex-direction: column; }
+.stat-label { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+.stat-val { font-size: 12px; font-weight: 900; color: #00e5ff; }
+.stat-val.ram { color: #00ff88; }
+
+.window-controls {
+  display: flex;
+  gap: 5px;
+  -webkit-app-region: no-drag;
+}
+.win-btn {
+  width: 30px; height: 30px;
+  background: transparent; border: none;
+  color: var(--text-muted); font-size: 16px;
+  cursor: pointer; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.win-btn:hover, .win-btn.close:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+/* TELA DE ABERTURA (BOOT SCREEN) */
+#boot-screen {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: var(--bg-color);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+  justify-content: center;
+  transition: opacity 0.8s ease, visibility 0.8s;
+}
+#boot-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+.boot-logo {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  margin-bottom: 20px;
+  text-shadow: 0 0 20px var(--primary-color);
+  animation: boot-pulse 1s infinite alternate;
+}
+.boot-click-text {
+  color: rgba(255,255,255,0.4);
+  font-size: 11px;
+  letter-spacing: 4px;
+  animation: pulse-opacity 2s infinite;
+  margin-bottom: 30px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.boot-bar-container {
+  width: 300px;
+  height: 2px;
+  background: rgba(255,255,255,0.05);
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 15px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.boot-bar {
+  width: 0%;
+  height: 100%;
+  background: var(--primary-color);
+  box-shadow: 0 0 10px var(--primary-color);
+  transition: width 1.5s cubic-bezier(0.8, 0, 0.2, 1);
+}
+.boot-text {
+  color: rgba(255,255,255,0.4);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-family: monospace;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+@keyframes boot-pulse {
+  0% { opacity: 0.5; filter: drop-shadow(0 0 10px var(--primary-color)); }
+  100% { opacity: 1; filter: drop-shadow(0 0 30px var(--primary-color)); }
+}
+@keyframes pulse-opacity {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+}
+body.booting .app-container {
+  opacity: 0;
+  transform: translateY(30px) scale(0.98);
+}
+.app-container {
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Mouse Gallery */
+.gallery-section {
+  margin-top: 50px;
+  padding-top: 30px;
+  border-top: 1px solid var(--border-color);
+}
+.gallery-title {
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  color: var(--text-muted);
+}
+.mouse-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 15px;
+}
+.mouse-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.mouse-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+.mouse-card.selected {
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--theme-color) 5%, transparent);
+}
+.mouse-img-container {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mouse-img-container img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+}
+.mouse-card-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-muted);
+}
+.mouse-card.selected .mouse-card-title {
+  color: #fff;
+}
+
+/* CONTENT AREA */
+.content-area {
+  flex: 1;
+  padding: 30px 40px;
+  position: relative;
+  overflow-y: auto;
+}
+
+/* Background dots (like the image) */
+.bg-dots {
+  position: absolute; top:0; left:0; width:100%; height:100%;
+  background-image: none;
+  background-size: 40px 40px;
+  pointer-events: none; z-index: 0;
+}
+
+.page-header {
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: 900;
+  margin: 0 0 5px 0;
+}
+.page-title span { color: var(--primary-color); }
+.page-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.mouse-config-grid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0px;
+  position: relative;
+  z-index: 1;
+  height: 450px;
+}
+
+.config-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 3;
+}
+.config-column.left { align-items: flex-end; margin-right: 15px; }
+.config-column.right { align-items: flex-start; margin-left: 15px; }
+
+.mouse-img-center {
+  height: 400px;
+  width: 220px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 30px rgba(0,0,0,0.8));
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Checkboxes novas */
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+}
+.checkbox-item span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.checkbox-item:hover span { color: #fff; }
+
+.cb-box {
+  width: 20px; height: 20px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  display: flex; justify-content: center; align-items: center;
+}
+.checkbox-item:hover .cb-box {
+  border-color: color-mix(in srgb, var(--theme-color) 60%, transparent);
+  background: rgba(255,255,255,0.06);
+}
+.checkbox-item input { display: none; }
+.checkbox-item input:checked + .cb-box, .checkbox-item input:checked ~ .cb-box {
+  background: #22c55e;
+  border-color: #22c55e;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+}
+.checkbox-item input:checked + .cb-box::after, .checkbox-item input:checked ~ .cb-box::after {
+  content: '';
+  width: 5px; height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+
+/* Ações no Rodapé da Área Central */
+.action-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 18px 0;
+  margin-top: 35px;
+  position: relative;
+  z-index: 10;
+}
+
+.btn-primary {
+  background: #1B1E23;
+  color: #F2F3F5;
+  border: 1px solid #2C3138;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  -webkit-font-smoothing: antialiased;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  background: #22262D;
+  border-color: #3A4048;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+.btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.btn-success-anim {
+  background: #00c853 !important;
+  box-shadow: 0 0 20px rgba(0, 200, 83, 0.6) !important;
+  color: white !important;
+  transform: scale(1.05) !important;
+}
+
+.fivem-list-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 15px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.fivem-list-item:hover {
+  background: rgba(255,255,255,0.04);
+}
+.fivem-list-item input {
+  display: none;
+}
+.custom-cb {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.custom-cb svg {
+  width: 14px;
+  height: 14px;
+  fill: #fff;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s ease;
+}
+.fivem-list-item input:checked + .custom-cb {
+  background: var(--theme-color);
+  border-color: var(--theme-color);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--theme-color) 40%, transparent);
+}
+.fivem-list-item input:checked + .custom-cb svg {
+  opacity: 1;
+  transform: scale(1);
+}
+.list-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.list-item-title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+.list-item-sub {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.btn-fivem {
+  background: rgba(248,107,18,0.1) !important;
+  border: 1px solid rgba(248,107,18,0.3) !important;
+  color: #F86B12 !important;
+  box-shadow: none !important;
+}
+.btn-fivem:hover {
+  background: rgba(248,107,18,0.2) !important;
+  border: 1px solid rgba(248,107,18,0.5) !important;
+  box-shadow: 0 5px 15px rgba(248,107,18,0.1) !important;
+}
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.03);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 12px 26px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.btn-secondary {
+  background: #2a2a2a;
+  color: #d0d0d0;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background: #353535;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* --- CUSTOM SLIDER --- */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+  outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--theme-color);
+  cursor: pointer;
+  margin-top: -7px;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--theme-color) 60%, transparent), inset 0 0 0 4px #fff;
+  transition: all 0.2s ease;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--theme-color) 80%, transparent), inset 0 0 0 3px #fff;
+}
+
+
+/* --- LOGIN SCREEN REMOVIDO --- */
+
+  /* ---------- Toast container ---------- */
+  #toast-container {
+    position: fixed;
+    top: 80px;
+    right: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 9999;
+    width: 340px;
+  }
+
+  .toast {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(22,24,28,.95), rgba(14,15,18,.95));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    overflow: hidden;
+    animation: slideIn .3s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .toast.leaving { animation: slideOut .25s ease forwards; }
+
+  @keyframes slideIn {
+    from { transform: translateX(40px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(40px); opacity: 0; }
+  }
+
+  .toast-icon {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .toast-icon svg { width: 15px; height: 15px; }
+
+  .toast.on .toast-icon { background: color-mix(in srgb, var(--theme-color) 15%, transparent); color: var(--theme-color); box-shadow: 0 0 12px color-mix(in srgb, var(--theme-color) 25%, transparent); }
+  .toast.off .toast-icon { background: rgba(255,90,90,.15); color: #ff6a6a; box-shadow: 0 0 12px rgba(255,90,90,.25); }
+
+  .toast-body { flex: 1; min-width: 0; }
+  .toast-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    color: #fff;
+    line-height: 1.3;
+  }
+  .toast-sub {
+    font-size: 11px;
+    color: #8a938d;
+    margin-top: 2px;
+  }
+  .toast.on .toast-sub { color: var(--theme-color); }
+  .toast.off .toast-sub { color: #ff9a9a; }
+
+  .toast-close {
+    background: none; border: none; color: #565b58; cursor: pointer;
+    font-size: 14px; padding: 4px; flex-shrink: 0; line-height: 1;
+  }
+  .toast-close:hover { color: #fff; }
+
+  .toast-bar {
+    position: absolute; bottom: 0; left: 0; height: 2.5px;
+    animation: shrink linear forwards;
+  }
+  .toast.on .toast-bar { background: var(--theme-color); box-shadow: 0 0 8px var(--theme-color); }
+  .toast.off .toast-bar { background: linear-gradient(90deg, #ff6a6a, #d94343); box-shadow: 0 0 8px #ff6a6a; }
+
+  @keyframes shrink {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+
+  input[type="color"].pro-color-picker {
+    -webkit-appearance: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 0;
+    background: transparent;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+    transition: 0.2s ease;
+  }
+  input[type="color"].pro-color-picker:hover {
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    transform: scale(1.1);
+  }
+  input[type="color"].pro-color-picker::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+  input[type="color"].pro-color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body class="booting">
+<div id="toast-container"></div>
+
+<!-- TELA DE ABERTURA -->
+<div id="boot-screen">
+<div class="boot-logo"><span style="color:#ffffff">Kozy</span></div>  <div class="boot-bar-container" id="boot-bar-container">
+    <div class="boot-bar" id="boot-bar"></div>
+  </div>
+  <div class="boot-text" id="boot-text">INICIALIZANDO SISTEMA...</div>
+</div>
+
+<div class="app-container">
+  <div id="particles-js" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
+  
+  <!-- BARRA LATERAL -->
+  <aside class="sidebar">
+    <div class="logo-container">
+      <div class="logo-text" style="color:#f7f5f7">KOZY</div>
+      <div class="logo-version">v1.0</div>
+    </div>
+    
+    <div class="optimization-progress">
+      <div style="display: flex; justify-content: space-between;">
+        <div class="opt-title">PROGRESSO DA OTIMIZAÇÃO</div>
+        <div class="opt-status" id="opt-percent" style="color: var(--primary-color); font-weight: bold;">0%</div>
+      </div>
+      <div class="opt-bar"><div class="opt-bar-fill" id="opt-bar-fill" style="width: 0%; transition: width 0.4s ease;"></div></div>
+      <div class="opt-status" id="opt-status-text">Aguardando seleção...</div>
+    </div>
+    
+    <div class="nav-menu">
+
+      <div class="nav-item active" onclick="switchTab('tab-mouse', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M13 1.07V9h7c0-4.08-3.05-7.44-7-7.93zM4 15c0 4.42 3.58 8 8 8s8-3.58 8-8v-4H4v4zm7-13.93C7.06 1.55 4 4.92 4 9h7V1.07z"/></svg>
+        PrecisionFix
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-teclado', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/></svg>
+        TecladoFix
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-fivem', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M22.4 24h-5.225c-.117 0-.455-1.127-1.026-3.375-1.982-6.909-3.124-10.946-3.417-12.12l3.37-3.325h.099c.454 1.42 2.554 7.676 6.299 18.768ZM12.342 7.084h-.048a3.382 3.385 0 0 1-.098-.492v-.098a102.619 102.715 0 0 1 3.272-3.275c.13.196.196.356.196.491v.05a140.694 140.826 0 0 1-3.322 3.324ZM5.994 10.9h-.05c.67-2.12 1.076-3.209 1.223-3.275L14.492.343c.08 0 .258.524.533 1.562zm1.37-4.014h-.05C8.813 2.342 9.612.048 9.71 0h4.495v.05a664.971 664.971 0 0 1-6.841 6.839Zm-2.69 7.874h-.05c.166-.798.554-1.418 1.174-1.855a312.918 313.213 0 0 1 5.71-5.717h.05c-.117.672-.375 1.175-.781 1.52zM1.598 24l-.098-.05c1.399-4.172 2.148-6.322 2.248-6.45l6.74-6.694v.05C10.232 11.88 8.974 16.263 6.73 24Z"/></svg>
+        FiveM
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-flick', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+        Flick
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-sensi', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
+        Sensi
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-game-profiles', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 6h-3.2l-1.4-2H7.6L6.2 6H3c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 13H3V8h4.2l1.4-2h6.8l1.4 2H21v11zM12 9a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>
+        Perfis de jogo
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-mira', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3-8c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/></svg>
+        Mira
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-servicos', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-10 16H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V9h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2z"/></svg>
+        Serviços
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-display', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 3H3c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+        Display
+      </div>
+    </div>
+    
+    <div class="user-profile" style="position: relative;">
+      <div style="display: block;">
+        <img src="fotode.jpg" class="avatar" id="profile-pic" alt="Avatar" style="object-fit: cover; transition: opacity 0.2s;">
+      </div>
+      <div class="user-info" style="flex: 1;">
+        <div class="user-name" id="user-name-display" style="outline: none; display: inline-block; white-space: nowrap; overflow: hidden; max-width: 150px; color: #fff; font-weight: 800; user-select: none; pointer-events: none;">KOZY</div>
+        <div class="user-sub">user</div>
+      </div>
+      <div class="user-settings" style="cursor: pointer; opacity: 0.6; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Configurações" onclick="switchTab('tab-config', null)">
+        <svg style="width: 18px; height: 18px; fill: var(--text-muted);" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98 0-.34-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-wrapper">
+    
+    <!-- Topbar Hardware Mockups -->
+    <div class="top-bar">
+      <div style="-webkit-app-region: drag; flex: 1; height: 100%;"></div>
+      <div style="flex: 1; height: 100%; -webkit-app-region: drag;"></div>
+      <div class="window-controls">
+        <button class="win-btn" id="min-btn">&#8211;</button>
+        <button class="win-btn close" id="close-btn">&times;</button>
+      </div>
+    </div>
+
+    <!-- Mouse Config Area -->
+    <div class="content-area">
+      <div class="bg-dots"></div>
+      
+      <div id="tab-mouse" class="tab-pane" style="display: block;">
+      <div class="page-header">
+        <h1 class="page-title">Mouse</h1>
+        <p class="page-subtitle">Configuração avançada de precisão e resposta (Tracking/Flick)</p>
+      </div>
+
+      <div class="mouse-config-grid">
+        
+        <!-- Esquerda -->
+        <div class="config-column left">
+          <label class="checkbox-item">
+            <span>Mouse Precision</span>
+            <input type="checkbox" id="cb-mouse-precision">
+            <div class="cb-box"></div>
+          </label>
+
+          <label class="checkbox-item">
+            <span>Performance Boost</span>
+            <input type="checkbox" id="cb-performance-boost">
+            <div class="cb-box"></div>
+          </label>
+          <label class="checkbox-item">
+            <span>Tracking</span>
+            <input type="checkbox" id="cb-k1ng-tracking">
+            <div class="cb-box"></div>
+          </label>
+          <label class="checkbox-item">
+            <span>Sensi</span>
+            <input type="checkbox" id="cb-k1ng-sensi">
+            <div class="cb-box"></div>
+          </label>
+          <label class="checkbox-item">
+            <span>Flick</span>
+            <input type="checkbox" id="cb-k1ng-flick">
+            <div class="cb-box"></div>
+          </label>
+          <label class="checkbox-item">
+            <span>0.5ms</span>
+            <input type="checkbox" id="cb-k1ng-0.5ms">
+            <div class="cb-box"></div>
+          </label>
+        </div>
+
+        <!-- MOUSE AO CENTRO COM ESCALA INICIAL -->
+        <img src="GPRO SUPER.png" class="mouse-img-center" alt="Mouse" style="transform: scale(2.2); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);">
+
+        <!-- Coluna Direita -->
+        <div class="config-column right">
+
+          <label class="checkbox-item">
+            <input type="checkbox" id="cb-k1ng-registros-mouse">
+            <div class="cb-box"></div>
+            <span>Registros Mouse</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="cb-k1ng-islc">
+            <div class="cb-box"></div>
+            <span>1slc / ISLC</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="cb-k1ng-sensi-x-y">
+            <div class="cb-box"></div>
+            <span>Sensi X/Y</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="cb-k1ng-flags">
+            <div class="cb-box"></div>
+            <span>Flags</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="cb-k1ng-accessibility">
+            <div class="cb-box"></div>
+            <span>Accessibility</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="cb-k1ng-boost-fivem">
+            <div class="cb-box"></div>
+            <span>Boost FiveM</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 18px 0 8px;">
+        <button id="btn-mark-all-mouse" class="btn-primary" type="button" style="padding: 10px 18px; font-size: 12px;">Marcar tudo</button>
+        <button id="btn-unmark-all-mouse" class="btn-secondary" type="button" style="padding: 10px 18px; font-size: 12px;">Desmarcar tudo</button>
+      </div>
+
+      <!-- Mouse Gallery Restaurada -->
+      <div class="gallery-section">
+        <div class="gallery-title">SELECIONE SEU MOUSE</div>
+        <div class="mouse-gallery">
+          <div class="mouse-card selected" onclick="selectGalleryMouse(this, 'GPRO SUPER.png', 'G PRO SUPERSTRIKE')">
+            <div class="mouse-img-container"><img src="GPRO SUPER.png" alt="G PRO"></div>
+            <div class="mouse-card-title">G PRO SUPERSTRIKE</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'viper V3.png', 'VIPER V3 PRO')">
+            <div class="mouse-img-container"><img src="viper V3.png" alt="Viper V3"></div>
+            <div class="mouse-card-title">VIPER V3 PRO</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'Attack shark r1.png', 'ATTACK SHARK R1')">
+            <div class="mouse-img-container"><img src="Attack shark r1.png" alt="Attack Shark R1"></div>
+            <div class="mouse-card-title">ATTACK SHARK R1</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'attack shark x3.png', 'ATTACK SHARK X3')">
+            <div class="mouse-img-container"><img src="attack shark x3.png" alt="Attack Shark X3"></div>
+            <div class="mouse-card-title">ATTACK SHARK X3</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'delux.png', 'DELUX')">
+            <div class="mouse-img-container"><img src="delux.png" alt="Delux"></div>
+            <div class="mouse-card-title">DELUX</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'dragonfly r1.png', 'DRAGONFLY R1')">
+            <div class="mouse-img-container"><img src="dragonfly r1.png" alt="Dragonfly R1"></div>
+            <div class="mouse-card-title">DRAGONFLY R1</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'fallen pantera eco.png', 'FALLEN PANTERA ECO')">
+            <div class="mouse-img-container"><img src="fallen pantera eco.png" alt="Fallen Pantera Eco"></div>
+            <div class="mouse-card-title">FALLEN PANTERA ECO</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'g pro superlight .png', 'G PRO SUPERLIGHT')">
+            <div class="mouse-img-container"><img src="g pro superlight .png" alt="G Pro Superlight"></div>
+            <div class="mouse-card-title">G PRO SUPERLIGHT</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'mousenovo.png', 'ATTACK SHARK X11')">
+            <div class="mouse-img-container"><img src="mousenovo.png" alt="Attack Shark X11"></div>
+            <div class="mouse-card-title">ATTACK SHARK X11</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'g403.png', 'G403')">
+            <div class="mouse-img-container"><img src="g403.png" alt="G403"></div>
+            <div class="mouse-card-title">G403</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'pulsar x2h.png', 'PULSAR X2H')">
+            <div class="mouse-img-container"><img src="pulsar x2h.png" alt="Pulsar X2H"></div>
+            <div class="mouse-card-title">PULSAR X2H</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'Ajazz 179 pro.png', 'AJAZZ 179 PRO')">
+            <div class="mouse-img-container"><img src="Ajazz 179 pro.png" alt="Ajazz 179 Pro"></div>
+            <div class="mouse-card-title">AJAZZ 179 PRO</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'Scyrox v8.png', 'SCYROX V8')">
+            <div class="mouse-img-container"><img src="Scyrox v8.png" alt="Scyrox V8"></div>
+            <div class="mouse-card-title">SCYROX V8</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'WLMOUSE Sword.png', 'WLMOUSE SWORD')">
+            <div class="mouse-img-container"><img src="WLMOUSE Sword.png" alt="WLMOUSE Sword"></div>
+            <div class="mouse-card-title">WLMOUSE SWORD</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'Lamzu.png', 'LAMZU')">
+            <div class="mouse-img-container"><img src="Lamzu.png" alt="Lamzu"></div>
+            <div class="mouse-card-title">LAMZU</div>
+          </div>
+          <div class="mouse-card" onclick="selectGalleryMouse(this, 'NPLAY Aim 10.0.png', 'RATO GAMING NPLAY AIM 10.0')">
+            <div class="mouse-img-container"><img src="NPLAY Aim 10.0.png" alt="Rato Gaming NPLAY Aim 10.0"></div>
+            <div class="mouse-card-title">NPLAY AIM 10.0</div>
+          </div>
+
+        </div>
+      </div>
+      </div>
+
+      <div id="tab-teclado" class="tab-pane" style="display: none;">
+      <div class="page-header">
+        <h1 class="page-title">Teclado</h1>
+        <p class="page-subtitle">Configuração avançada de resposta e delay (Input/Latency)</p>
+      </div>
+
+      <div class="mouse-config-grid">
+        
+        <!-- Esquerda -->
+        <div class="config-column left">
+          <label class="checkbox-item">
+            <span>Perfil de Precisão</span>
+            <input type="checkbox" id="cb-kb-precision">
+            <div class="cb-box"></div>
+          </label>
+          <label class="checkbox-item">
+            <span>Desativar Filter Keys</span>
+            <input type="checkbox" id="cb-kb-filter">
+            <div class="cb-box"></div>
+          </label>
+          <label class="checkbox-item">
+            <span>Atraso de Repetição Mínimo</span>
+            <input type="checkbox" id="cb-kb-delay">
+            <div class="cb-box"></div>
+          </label>
+          <label class="checkbox-item">
+            <span>Taxa de Repetição Máxima</span>
+            <input type="checkbox" id="cb-kb-rate">
+            <div class="cb-box"></div>
+          </label>
+        </div>
+
+        <!-- TECLADO AO CENTRO -->
+        <img src="imagem_teclado.png" class="mouse-img-center" alt="Teclado" style="width: 350px !important; height: auto !important; object-fit: contain; transform: scale(1.0); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);">
+
+        <!-- Coluna Direita -->
+        <div class="config-column right">
+          <label class="checkbox-item">
+            <input type="checkbox" id="cb-kb-input">
+            <div class="cb-box"></div>
+            <span>Prioridade de Processo em Jogo</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="cb-kb-registros">
+            <div class="cb-box"></div>
+            <span>Aplicar Ajustes de Registro</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="cb-kb-usb">
+            <div class="cb-box"></div>
+            <span>Suspensão USB Seletiva OFF</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="cb-kb-bounce">
+            <div class="cb-box"></div>
+            <span>Desativar Sticky/Toggle Key</span>
+          </label>
+        </div>
+      </div>
+      
+      <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); color: #ffc107; padding: 12px; border-radius: 8px; margin-top: 25px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px;">
+        <svg style="width: 20px; height: 20px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        Aviso: Para que as otimizações de teclado façam efeito, é necessário reiniciar o computador após aplicá-las.
+      </div>
+      
+      <script>
+        
+  // Init Theme Color
+  document.documentElement.style.setProperty("--theme-color", localStorage.getItem("particlesColor") || "#ffffff");
+function applyKeyboardTweaks(tweaksOverride) {
+          const tweaks = tweaksOverride || {
+            precision: document.getElementById('cb-kb-precision').checked,
+            filterKeys: document.getElementById('cb-kb-filter').checked,
+            delay: document.getElementById('cb-kb-delay').checked,
+            rate: document.getElementById('cb-kb-rate').checked,
+            input: document.getElementById('cb-kb-input').checked,
+            registros: document.getElementById('cb-kb-registros').checked,
+            usb: document.getElementById('cb-kb-usb').checked,
+            bounce: document.getElementById('cb-kb-bounce').checked
+          };
+          const { ipcRenderer } = require('electron');
+          ipcRenderer.send('apply-keyboard-tweaks', tweaks);
+        }
+
+        function revertKeyboardTweaks() {
+          const { ipcRenderer } = require('electron');
+          ipcRenderer.send('revert-keyboard-tweaks');
+        }
+
+        const ICON_ON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>`;
+        const ICON_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+
+        function showToast(titulo, sub, ligado, duracaoMs = 3500, force = false) {
+          if (!force && sessionStorage.getItem('enable_notifications') === 'false') return;
+          const container = document.getElementById('toast-container');
+          if (!container) return;
+          const toast = document.createElement('div');
+          toast.className = 'toast ' + (ligado ? 'on' : 'off');
+
+          toast.innerHTML = `
+            <div class="toast-icon">${ligado ? ICON_ON : ICON_OFF}</div>
+            <div class="toast-body">
+              <div class="toast-title">${titulo}</div>
+              ${sub ? `<div class="toast-sub">${sub}</div>` : ''}
+            </div>
+            <button class="toast-close">&times;</button>
+            <div class="toast-bar" style="animation-duration:${duracaoMs}ms"></div>
+          `;
+
+          container.prepend(toast);
+
+          // Limita a quantidade de toasts a 2 na tela
+          while (container.children.length > 2) {
+            const last = container.lastElementChild;
+            if (last) last.remove();
+          }
+
+          const remover = () => {
+            toast.classList.add('leaving');
+            setTimeout(() => toast.remove(), 250);
+          };
+
+          toast.querySelector('.toast-close').addEventListener('click', remover);
+          setTimeout(remover, duracaoMs);
+        }
+
+        const { ipcRenderer: ipcRendererKb } = require('electron');
+        ipcRendererKb.on('keyboard-tweaks-reply', (event, response) => {
+          if(!response.success) showToast('ERRO TECLADO Falhou!', (response.error || 'Erro desconhecido'), false);
+        });
+        ipcRendererKb.on('revert-keyboard-tweaks-reply', (event, response) => {
+          if(response.success) showToast('PADRÃO TECLADO Restaurado!', '', true);
+          else showToast('ERRO RESTAURAR Falhou!', (response.error || 'Erro desconhecido'), false);
+        });
+      </script>
+      </div>
+
+
+      <div id="tab-fivem" class="tab-pane" style="display: none; padding: 20px;">
+        <!-- Header Banner -->
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;">
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="width: 50px; height: 50px; background: rgba(248,107,18,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(248,107,18,0.3);">
+              <svg style="width:24px; height:24px; fill:#F86B12;" viewBox="0 0 24 24"><path d="M22.4 24h-5.225c-.117 0-.455-1.127-1.026-3.375-1.982-6.909-3.124-10.946-3.417-12.12l3.37-3.325h.099c.454 1.42 2.554 7.676 6.299 18.768ZM12.342 7.084h-.048a3.382 3.385 0 0 1-.098-.492v-.098a102.619 102.715 0 0 1 3.272-3.275c.13.196.196.356.196.491v.05a140.694 140.826 0 0 1-3.322 3.324ZM5.994 10.9h-.05c.67-2.12 1.076-3.209 1.223-3.275L14.492.343c.08 0 .258.524.533 1.562zm1.37-4.014h-.05C8.813 2.342 9.612.048 9.71 0h4.495v.05a664.971 664.971 0 0 1-6.841 6.839Zm-2.69 7.874h-.05c.166-.798.554-1.418 1.174-1.855a312.918 313.213 0 0 1 5.71-5.717h.05c-.117.672-.375 1.175-.781 1.52zM1.598 24l-.098-.05c1.399-4.172 2.148-6.322 2.248-6.45l6.74-6.694v.05C10.232 11.88 8.974 16.263 6.73 24Z"/></svg>
+            </div>
+            <div>
+              <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Jogar FiveM</h2>
+              <p style="margin: 5px 0 0 0; font-size: 13px; color: var(--text-muted); font-weight: 600;">Prepara o PC do seu jeito e abre o jogo</p>
+            </div>
+          </div>
+          <button class="btn-primary btn-fivem" id="btn-launch-fivem" onclick="launchFiveM()" style="font-size: 14px; padding: 12px 25px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+            <svg style="width:16px; height:16px; fill:currentColor;" viewBox="0 0 24 24"><path d="M22.4 24h-5.225c-.117 0-.455-1.127-1.026-3.375-1.982-6.909-3.124-10.946-3.417-12.12l3.37-3.325h.099c.454 1.42 2.554 7.676 6.299 18.768ZM12.342 7.084h-.048a3.382 3.385 0 0 1-.098-.492v-.098a102.619 102.715 0 0 1 3.272-3.275c.13.196.196.356.196.491v.05a140.694 140.826 0 0 1-3.322 3.324ZM5.994 10.9h-.05c.67-2.12 1.076-3.209 1.223-3.275L14.492.343c.08 0 .258.524.533 1.562zm1.37-4.014h-.05C8.813 2.342 9.612.048 9.71 0h4.495v.05a664.971 664.971 0 0 1-6.841 6.839Zm-2.69 7.874h-.05c.166-.798.554-1.418 1.174-1.855a312.918 313.213 0 0 1 5.71-5.717h.05c-.117.672-.375 1.175-.781 1.52zM1.598 24l-.098-.05c1.399-4.172 2.148-6.322 2.248-6.45l6.74-6.694v.05C10.232 11.88 8.974 16.263 6.73 24Z"/></svg>
+            Abrir FiveM
+          </button>
+        </div>
+
+        <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 15px; text-transform: uppercase;">AO ABRIR O JOGO, O PAINEL VAI:</div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px; position: relative;">
+          
+          <label class="fivem-list-item">
+            <input type="checkbox" id="cb-priority">
+            <div class="custom-cb">
+              <svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+            </div>
+            <div class="list-item-text">
+              <div class="list-item-title">Fechar apps em segundo plano</div>
+              <div class="list-item-sub">Navegadores, Spotify, OneDrive... (o Discord é mantido)</div>
+            </div>
+          </label>
+
+          <label class="fivem-list-item">
+            <input type="checkbox" id="cb-cache">
+            <div class="custom-cb">
+              <svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+            </div>
+            <div class="list-item-text">
+              <div class="list-item-title">Limpar a RAM e Cache FiveM</div>
+              <div class="list-item-sub">Libera memória logo antes de abrir</div>
+            </div>
+          </label>
+
+          <label class="fivem-list-item">
+            <input type="checkbox" id="cb-fps">
+            <div class="custom-cb">
+              <svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+            </div>
+            <div class="list-item-text">
+              <div class="list-item-title">Aplicar otimizações recomendadas</div>
+              <div class="list-item-sub">Conjunto seguro de tweaks para o seu PC</div>
+            </div>
+          </label>
+
+          <label class="fivem-list-item">
+            <input type="checkbox" id="cb-flushdns">
+            <div class="custom-cb">
+              <svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+            </div>
+            <div class="list-item-text">
+              <div class="list-item-title">Boost automático ao detectar o jogo</div>
+              <div class="list-item-sub">Reduz latência (Ping) e força prioridade alta no processo</div>
+            </div>
+          </label>
+
+          <div id="fivem-feedback"></div>
+        </div>
+      </div>
+
+      <!-- Aba Flick / Aim Trainer -->
+      <div id="tab-flick" class="tab-pane" style="display: none; padding: 0; width: 100%; height: calc(100vh - 120px);">
+        <iframe src="novo_flick.html" style="width: 100%; height: 100%; border: none; border-radius: 12px;"></iframe>
+      </div>
+
+      <div id="tab-sensi" class="tab-pane" style="display: none; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;">
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="width: 50px; height: 50px; background: color-mix(in srgb, var(--theme-color) 10%, transparent); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--theme-color) 30%, transparent);">
+              <svg style="width:24px; height:24px; fill:var(--theme-color);" viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
+            </div>
+            <div>
+              <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Sensi</h2>
+              <p style="margin: 5px 0 0 0; font-size: 13px; color: var(--text-muted); font-weight: 600;">Ajustes finos do mouse</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 25px; position: relative;">
+          
+          <!-- Secao 1 -->
+          <div>
+            <h3 style="color: #fff; font-size: 16px; margin: 0 0 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Configuração de Entrada do Mouse</h3>
+            <label class="fivem-list-item" style="padding: 15px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px;">
+              <input type="checkbox" id="cb-accel" checked>
+              <div class="custom-cb">
+                <svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+              </div>
+              <div class="list-item-text">
+                <div class="list-item-title">Desativar Aceleração do Windows (Enhance Pointer Precision)</div>
+                <div class="list-item-sub" style="margin-top: 4px;">↳ Nota: Desative para garantir movimento 1:1 pixel.</div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Secao 2 -->
+          <div>
+            <h3 style="color: #fff; font-size: 16px; margin: 0 0 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Sensibilidade (Registry Value)</h3>
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <div class="list-item-title">Velocidade do Ponteiro</div>
+                <div class="list-item-title" style="color: var(--primary-color);">Valor Atual: <span id="sensi-val-display">10</span></div>
+              </div>
+              <input type="range" id="sensi-slider" min="1" max="20" value="10" style="width: 100%; cursor: pointer;">
+              <div class="list-item-sub" style="margin-top: 15px; line-height: 1.6;">
+                ↳ 1-9: Lento &nbsp;|&nbsp; 10: 1:1 (sem aceleração*) &nbsp;|&nbsp; 11-20: Rápido
+                <br>
+                <span style="opacity: 0.7;">[*] Nota técnica: O movimento 1:1 real depende da aceleração estar desligada.</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 15px; margin-top: 10px; align-items: center;">
+            <button class="btn-primary" id="btn-apply-sensi" onclick="applySensi()" style="padding: 12px 30px; font-size: 15px;">
+              Aplicar Alterações
+            </button>
+            <button class="btn-secondary" id="btn-restore-sensi" onclick="restoreSensi()" style="padding: 12px 30px; font-size: 15px;">
+              Restaurar Padrão
+            </button>
+          </div>
+          <div id="sensi-feedback" style="color: #2ed573; font-size: 12px; font-weight: bold; opacity: 0; transition: opacity 0.3s; margin-top: -10px;">Aplicado com sucesso!</div>
+        </div>
+      </div>
+
+      <div id="tab-game-profiles" class="tab-pane" style="display: none; padding: 20px;">
+        <div class="page-header">
+          <h1 class="page-title">Perfis por jogo</h1>
+          <p class="page-subtitle">Salve e recupere suas configurações de mouse, teclado e sensibilidade para cada jogo.</p>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 22px; margin-bottom: 24px;">
+          <label for="game-profile-name" style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 10px;">Nome do jogo</label>
+          <div style="display: flex; gap: 10px; max-width: 620px;">
+            <input id="game-profile-name" type="text" maxlength="40" placeholder="Ex.: Valorant, CS2 ou FiveM"
+              style="flex: 1; min-width: 0; padding: 12px 14px; background: rgba(0,0,0,0.35); color: #fff; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; font: inherit;">
+            <button class="btn-primary" type="button" onclick="saveGameProfile()" style="padding: 12px 18px; font-size: 12px;">Salvar perfil atual</button>
+          </div>
+          <p style="color: var(--text-muted); font-size: 12px; line-height: 1.6; margin: 12px 0 0;">
+            Configure as opções nas abas Mouse, Teclado e Sensi antes de salvar. Se salvar outro perfil com o mesmo nome, ele será atualizado.
+          </p>
+        </div>
+
+        <div style="background: rgba(255,193,7,0.08); border: 1px solid rgba(255,193,7,0.22); color: #ffc107; padding: 14px 16px; border-radius: 10px; margin-bottom: 24px; font-size: 12px; line-height: 1.6;">
+          Aplicar um perfil altera configurações do Windows e pode solicitar permissão de administrador. Opções desmarcadas são removidas da seleção, mas não desfazem automaticamente ajustes já aplicados; use as opções de restauração do app quando necessário.
+        </div>
+
+        <h2 style="font-size: 15px; margin: 0 0 14px;">Seus perfis</h2>
+        <div id="game-profiles-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;" aria-live="polite"></div>
+      </div>
+
+      <div id="tab-mira" class="tab-pane" style="display: none; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="width: 50px; height: 50px; background: rgba(0, 229, 255, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0, 229, 255, 0.3);">
+              <svg style="width:24px; height:24px; fill:#00e5ff;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3-8c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/></svg>
+            </div>
+            <div>
+              <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Mira</h2>
+              <p style="margin: 5px 0 0 0; font-size: 13px; color: var(--text-muted); font-weight: 600;">Crosshair overlay customizado para qualquer jogo</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: rgba(255, 204, 0, 0.05); border: 1px solid rgba(255, 204, 0, 0.2); border-radius: 12px; padding: 15px 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px;">
+          <svg style="width: 24px; height: 24px; fill: #ffcc00; flex-shrink: 0;" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 16h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          <div style="color: #ffcc00; font-size: 13px; font-weight: 500; line-height: 1.5;">
+            Para que a mira apareça nos seus clipes, jogue em <strong style="color: #fff;">Janela sem Bordas (Borderless Windowed)</strong> e utilize a opção <strong style="color: #fff;">Captura de Tela (Display Capture)</strong> no seu gravador.
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 25px; position: relative;">
+          
+          <div class="display-profiles-box" style="margin-bottom: 0px;">
+            <div class="display-profiles-header">
+              <div class="display-section-title" style="margin-bottom: 0;">PERFIS DE MIRA</div>
+              <button class="display-save-btn" onclick="saveMiraProfile()"><svg style="width:14px;height:14px;fill:#fff;" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Salvar perfil atual</button>
+            </div>
+            <div id="saved-mira-profiles-container" style="font-size: 13px; color: var(--text-muted);">Nenhum perfil salvo. Ajuste a mira e clique em "Salvar perfil atual".</div>
+          </div>
+          
+          <div>
+            <h3 style="color: #fff; font-size: 16px; margin: 0 0 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Configurações</h3>
+            <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 20px;">
+              <label class="fivem-list-item" style="flex: 1; padding: 15px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 0;">
+                <input type="checkbox" id="cb-crosshair-active">
+                <div class="custom-cb">
+                  <svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+                </div>
+                <div class="list-item-text">
+                  <div class="list-item-title">Ativar Mira (Overlay)</div>
+                </div>
+              </label>
+              <div style="display: flex; gap: 8px;">
+                <button id="btn-bind-mira" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0 20px; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" onclick="startBindMira(event)">Atalho: Nenhum</button>
+                <button id="btn-clear-mira" style="background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0 12px; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; transition: 0.2s;" onmouseover="this.style.background='rgba(255,85,85,0.2)'; this.style.color='#ff5555'; this.style.borderColor='rgba(255,85,85,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='rgba(255,255,255,0.5)'; this.style.borderColor='rgba(255,255,255,0.1)'" onclick="miraBind = null; finishBindMira(null);" title="Remover Atalho">X</button>
+              </div>
+            </div>
+
+            <h3 style="color: #fff; font-size: 16px; margin: 0 0 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Ajustes</h3>
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-muted);"><span>LARGURA (SCALE X)</span> <span id="miraScaleXVal" style="color: #fff;">100%</span></div>
+                <input type="range" id="mira-scaleX" min="10" max="500" value="100" style="width: 100%; cursor: pointer;" oninput="document.getElementById('miraScaleXVal').innerText = this.value + '%'; sendMiraUpdate();">
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-muted);"><span>ALTURA (SCALE Y)</span> <span id="miraScaleYVal" style="color: #fff;">100%</span></div>
+                <input type="range" id="mira-scaleY" min="10" max="500" value="100" style="width: 100%; cursor: pointer;" oninput="document.getElementById('miraScaleYVal').innerText = this.value + '%'; sendMiraUpdate();">
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-muted);"><span>RESOLUÇÃO DO JOGO (OFFSET AUTOMÁTICO)</span></div>
+                <div class="custom-select-wrapper" style="position: relative; user-select: none; width: 100%;">
+                  <div class="custom-select-trigger" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'" style="background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
+                    <span id="mira-resolution-display">Personalizada (Ajuste Manual Abaixo)</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.5;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
+                  <div class="custom-select-options" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; background: #161616; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                    <div data-val="custom" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='transparent'" onclick="selectMiraResolution(this)" style="padding: 10px; cursor: pointer; transition: background 0.2s; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05);">Personalizada (Ajuste Manual Abaixo)</div>
+                    <div data-val="1920x1080" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='transparent'" onclick="selectMiraResolution(this)" style="padding: 10px; cursor: pointer; transition: background 0.2s; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05);">1920x1080 (Nativo / Tela Cheia)</div>
+                    <div data-val="1440x1080" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='transparent'" onclick="selectMiraResolution(this)" style="padding: 10px; cursor: pointer; transition: background 0.2s; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05);">1440x1080 (Stretched)</div>
+                    <div data-val="1280x1024" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='transparent'" onclick="selectMiraResolution(this)" style="padding: 10px; cursor: pointer; transition: background 0.2s; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05);">1280x1024</div>
+                    <div data-val="1280x960" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='transparent'" onclick="selectMiraResolution(this)" style="padding: 10px; cursor: pointer; transition: background 0.2s; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05);">1280x960</div>
+                    <div data-val="1100x1080" data-x="0" data-y="20" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='transparent'" onclick="selectMiraResolution(this)" style="padding: 10px; cursor: pointer; transition: background 0.2s; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05);">1100x1080</div>
+                    <div data-val="1024x768" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='transparent'" onclick="selectMiraResolution(this)" style="padding: 10px; cursor: pointer; transition: background 0.2s; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05);">1024x768</div>
+                    <div data-val="800x600" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='transparent'" onclick="selectMiraResolution(this)" style="padding: 10px; cursor: pointer; transition: background 0.2s; color: #fff;">800x600</div>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-muted);"><span>POSIÇÃO HORIZONTAL (X)</span> <span id="miraPosXVal" style="color: #fff;">0px</span></div>
+                <input type="range" id="mira-posX" min="-500" max="500" value="0" style="width: 100%; cursor: pointer;" oninput="document.getElementById('miraPosXVal').innerText = this.value + 'px'; sendMiraUpdate();">
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-muted);"><span>POSIÇÃO VERTICAL (Y)</span> <span id="miraPosYVal" style="color: #fff;">0px</span></div>
+                <input type="range" id="mira-posY" min="-500" max="500" value="0" style="width: 100%; cursor: pointer;" oninput="document.getElementById('miraPosYVal').innerText = this.value + 'px'; sendMiraUpdate();">
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-muted);"><span>TRANSPARÊNCIA (OPACITY)</span> <span id="miraOpacityVal" style="color: #fff;">100%</span></div>
+                <input type="range" id="mira-opacity" min="10" max="100" value="100" style="width: 100%; cursor: pointer;" oninput="document.getElementById('miraOpacityVal').innerText = this.value + '%'; sendMiraUpdate();">
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-muted);"><span>COR DA MIRA</span> <span id="miraColorVal" style="color: #fff;">#ffffff</span></div>
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                  
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background: #00ff00; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#fff'" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(255,255,255,0.2)'" onclick="document.getElementById('mira-color').value='#00ff00'; document.getElementById('miraColorVal').innerText='#00ff00'; document.getElementById('mira-color-custom-btn').style.background='#00ff00'; sendMiraUpdate();"></div>
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background: #00e5ff; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#fff'" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(255,255,255,0.2)'" onclick="document.getElementById('mira-color').value='#00e5ff'; document.getElementById('miraColorVal').innerText='#00e5ff'; document.getElementById('mira-color-custom-btn').style.background='#00e5ff'; sendMiraUpdate();"></div>
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background: #ff0055; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#fff'" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(255,255,255,0.2)'" onclick="document.getElementById('mira-color').value='#ff0055'; document.getElementById('miraColorVal').innerText='#ff0055'; document.getElementById('mira-color-custom-btn').style.background='#ff0055'; sendMiraUpdate();"></div>
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background: #ffaa00; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#fff'" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(255,255,255,0.2)'" onclick="document.getElementById('mira-color').value='#ffaa00'; document.getElementById('miraColorVal').innerText='#ffaa00'; document.getElementById('mira-color-custom-btn').style.background='#ffaa00'; sendMiraUpdate();"></div>
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background: #ffffff; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#fff'" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(255,255,255,0.2)'" onclick="document.getElementById('mira-color').value='#ffffff'; document.getElementById('miraColorVal').innerText='#ffffff'; document.getElementById('mira-color-custom-btn').style.background='#ffffff'; sendMiraUpdate();"></div>
+                  
+                  <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.1); margin: 0 5px;"></div>
+                  
+                  <div style="position: relative; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff); padding: 2px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                    <div id="mira-color-custom-btn" style="width: 100%; height: 100%; border-radius: 50%; background: #ffffff; border: 2px solid rgba(0,0,0,0.5);"></div>
+                    <input type="color" id="mira-color" value="#ffffff" style="opacity: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" oninput="document.getElementById('miraColorVal').innerText = this.value; document.getElementById('mira-color-custom-btn').style.background = this.value; sendMiraUpdate();">
+                  </div>
+                  <span style="font-size: 10px; color: var(--text-muted); margin-left: 5px; cursor: pointer;" onclick="document.getElementById('mira-color').click()">Personalizada</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <label style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-muted); cursor: pointer;">
+                  <span>ATIVAR CONTORNO (OUTLINE)</span>
+                  <input type="checkbox" id="mira-has-outline" onchange="sendMiraUpdate();">
+                </label>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-muted);"><span>ESPESSURA DO CONTORNO</span> <span id="miraOutlineThickVal" style="color: #fff;">1px</span></div>
+                <input type="range" id="mira-outline-thickness" min="1" max="5" value="1" style="width: 100%; cursor: pointer;" oninput="document.getElementById('miraOutlineThickVal').innerText = this.value + 'px'; sendMiraUpdate();">
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-muted);"><span>COR DO CONTORNO</span> <span id="miraOutlineColorVal" style="color: #fff;">#000000</span></div>
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                  
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background: #000000; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#fff'" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(255,255,255,0.2)'" onclick="document.getElementById('mira-outline-color').value='#000000'; document.getElementById('miraOutlineColorVal').innerText='#000000'; document.getElementById('mira-outline-custom-btn').style.background='#000000'; sendMiraUpdate();"></div>
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background: #ffffff; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#fff'" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(255,255,255,0.2)'" onclick="document.getElementById('mira-outline-color').value='#ffffff'; document.getElementById('miraOutlineColorVal').innerText='#ffffff'; document.getElementById('mira-outline-custom-btn').style.background='#ffffff'; sendMiraUpdate();"></div>
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background: #ff0055; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#fff'" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(255,255,255,0.2)'" onclick="document.getElementById('mira-outline-color').value='#ff0055'; document.getElementById('miraOutlineColorVal').innerText='#ff0055'; document.getElementById('mira-outline-custom-btn').style.background='#ff0055'; sendMiraUpdate();"></div>
+                  
+                  <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.1); margin: 0 5px;"></div>
+                  
+                  <div style="position: relative; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff); padding: 2px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                    <div id="mira-outline-custom-btn" style="width: 100%; height: 100%; border-radius: 50%; background: #000000; border: 2px solid rgba(0,0,0,0.5);"></div>
+                    <input type="color" id="mira-outline-color" value="#000000" style="opacity: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" oninput="document.getElementById('miraOutlineColorVal').innerText = this.value; document.getElementById('mira-outline-custom-btn').style.background = this.value; sendMiraUpdate();">
+                  </div>
+                  <span style="font-size: 10px; color: var(--text-muted); margin-left: 5px; cursor: pointer;" onclick="document.getElementById('mira-outline-color').click()">Personalizada</span>
+                </div>
+              </div>
+              
+              <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px;">
+                <button onclick="document.getElementById('mira-shape-modal').style.display='flex';" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 15px 20px; border-radius: 12px; color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                  <div style="display: flex; align-items: center; gap: 15px;">
+                    <svg style="width: 20px; height: 20px; fill: #fff;" viewBox="0 0 24 24"><path d="M21.58 16.09l-1.09-7.66C20.21 6.46 18.52 5 16.5 5h-9C5.48 5 3.79 6.46 3.51 8.43l-1.09 7.66C2.2 17.63 3.39 19 4.94 19c.68 0 1.32-.27 1.8-.75L9 16h6l2.25 2.25c.48.48 1.13.75 1.8.75 1.56 0 2.75-1.37 2.53-2.91zM11 11H9v2H8v-2H6v-1h2V8h1v2h2v1zm4-1c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm2 3c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>
+                    Escolher mira de jogo
+                  </div>
+                  <svg style="width: 16px; height: 16px; fill: rgba(255,255,255,0.5);" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                </button>
+              </div>
+
+              <!-- Shape Modal -->
+              <div id="mira-shape-modal" style="display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); justify-content: center; align-items: center;" onclick="if(event.target===this) this.style.display='none';">
+                <div style="background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; width: 350px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #fff;">Formatos de Mira</h3>
+                    <div style="cursor: pointer; color: var(--text-muted);" onclick="document.getElementById('mira-shape-modal').style.display='none';"><svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <div onclick="selectMiraShape('Layer.png')" style="cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                      <div style="width:30px;height:30px;background:white;-webkit-mask-image:url('Layer.png');-webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;margin-bottom:8px;"></div>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Padrão</span>
+                    </div>
+                    <div onclick="selectMiraShape(getSvgShape('dot'))" style="cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                      <div style="width:6px;height:6px;background:white;border-radius:50%;margin-bottom:11px;margin-top:12px;"></div>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Ponto</span>
+                    </div>
+                    <div onclick="selectMiraShape(getSvgShape('cross'))" style="cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                      <svg style="width:24px;height:24px;fill:white;margin-bottom:8px;margin-top:3px;" viewBox="0 0 24 24"><rect x="11.5" y="2" width="1" height="20"/><rect x="2" y="11.5" width="20" height="1"/></svg>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Cruz</span>
+                    </div>
+                    <div onclick="selectMiraShape(getSvgShape('circle'))" style="cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                      <svg style="width:24px;height:24px;stroke:white;fill:none;margin-bottom:8px;margin-top:3px;" stroke-width="2" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="3"/><circle cx="12" cy="12" r="1.5" fill="white" stroke="none"/></svg>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Círculo</span>
+                    </div>
+                    <div onclick="selectMiraShape(getSvgShape('chevron'))" style="cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                      <svg style="width:24px;height:24px;fill:white;margin-bottom:8px;margin-top:3px;" viewBox="0 0 24 24"><path d="M12 4 L2 14 L4 16 L12 8 L20 16 L22 14 Z"/></svg>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Chevron</span>
+                    </div>
+                    <div onclick="selectMiraShape(getSvgShape('tcross'))" style="cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                      <svg style="width:24px;height:24px;fill:white;margin-bottom:8px;margin-top:3px;" viewBox="0 0 24 24"><rect x="11.5" y="2" width="1" height="11"/><rect x="2" y="11.5" width="20" height="1"/></svg>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Cruz (T)</span>
+                    </div>
+                    <div onclick="selectMiraShape(getSvgShape('x'))" style="cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                      <svg style="width:24px;height:24px;stroke:white;stroke-width:2;stroke-linecap:square;margin-bottom:8px;margin-top:3px;" viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Letra X</span>
+                    </div>
+                    <div onclick="selectMiraShape(getSvgShape('square'))" style="cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                      <svg style="width:24px;height:24px;stroke:white;fill:none;stroke-width:2;margin-bottom:8px;margin-top:3px;" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/></svg>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Quadrado</span>
+                    </div>
+                    <div onclick="selectMiraShape(getSvgShape('diamond'))" style="cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                      <svg style="width:24px;height:24px;fill:white;margin-bottom:8px;margin-top:3px;" viewBox="0 0 24 24"><polygon points="12,2 22,12 12,22 2,12"/></svg>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Diamante</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <script>
+                window.currentMiraShape = 'default';
+                function getSvgShape(type) {
+                  let svg = '';
+                  if(type === 'dot') svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="black"/></svg>';
+                  else if(type === 'cross') svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="11.5" y="2" width="1" height="20" fill="black"/><rect x="2" y="11.5" width="20" height="1" fill="black"/></svg>';
+                  else if(type === 'circle') svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="3" fill="none" stroke="black" stroke-width="1"/><circle cx="12" cy="12" r="1.5" fill="black"/></svg>';
+                  else if(type === 'chevron') svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4 L2 14 L3 15 L12 6 L21 15 L22 14 Z" fill="black"/></svg>';
+                  else if(type === 'tcross') svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="11.5" y="2" width="1" height="11" fill="black"/><rect x="2" y="11.5" width="20" height="1" fill="black"/></svg>';
+                  else if(type === 'x') svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19" stroke="black" stroke-width="1" stroke-linecap="square"/><line x1="19" y1="5" x2="5" y2="19" stroke="black" stroke-width="1" stroke-linecap="square"/></svg>';
+                  else if(type === 'square') svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" fill="none" stroke="black" stroke-width="1"/></svg>';
+                  else if(type === 'diamond') svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polygon points="12,2 22,12 12,22 2,12" fill="none" stroke="black" stroke-width="1"/></svg>';
+                  else return 'Layer.png';
+                  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+                }
+                function selectMiraShape(shape) {
+                  window.currentMiraShape = shape;
+                  document.getElementById('mira-shape-modal').style.display = 'none';
+                  const cb = document.getElementById('cb-crosshair-active');
+                  if (!cb.checked) {
+                    cb.checked = true;
+                    if(typeof toggleMira === 'function') toggleMira();
+                  } else {
+                    sendMiraUpdate();
+                  }
+                }
+              </script>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-servicos" class="tab-pane" style="display: none; padding: 20px;">
+        <style>
+          .svc-list { display: flex; flex-direction: column; gap: 12px; }
+          .svc-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px 20px; transition: all 0.2s; }
+          .svc-item:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); }
+          .svc-info { display: flex; flex-direction: column; gap: 4px; }
+          .svc-title { color: #fff; font-size: 15px; font-weight: 700; font-family: monospace; letter-spacing: 1px; }
+          .svc-desc { color: var(--text-muted); font-size: 11px; }
+          .svc-controls { display: flex; align-items: center; gap: 20px; }
+          .svc-status { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 4px; background: rgba(0, 255, 65, 0.1); color: #00ff41; border: 1px solid rgba(0, 255, 65, 0.2); text-transform: uppercase; width: 80px; text-align: center; }
+          .svc-status.stopped { background: rgba(255, 51, 51, 0.1); color: #ff3333; border-color: rgba(255, 51, 51, 0.2); }
+          .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+          .switch input { opacity: 0; width: 0; height: 0; }
+          .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
+          .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: var(--text-muted); transition: .4s; border-radius: 50%; }
+          .switch input:checked + .slider { background-color: #00ff41; border-color: #00ff41; box-shadow: 0 0 10px rgba(0, 255, 65, 0.4); }
+          .switch input:checked + .slider:before { transform: translateX(20px); background-color: #fff; }
+        </style>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;">
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="width: 50px; height: 50px; background: color-mix(in srgb, var(--theme-color) 10%, transparent); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--theme-color) 30%, transparent);">
+              <svg style="width:24px; height:24px; fill:var(--primary-color);" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-10 16H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V9h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2z"/></svg>
+            </div>
+            <div>
+              <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Serviços</h2>
+              <p style="margin: 5px 0 0 0; font-size: 13px; color: var(--text-muted); font-weight: 600;">Gerenciamento de serviços do sistema</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="svc-list">
+          <div class="svc-item">
+            <div class="svc-info"><div class="svc-title">[ 1. DiagTrack ]</div></div>
+            <div class="svc-controls">
+              <div class="svc-status" id="st-diagtrack">RUNNING</div>
+              <label class="switch"><input type="checkbox" checked onchange="toggleWindowsService('DiagTrack', this.checked, 'st-diagtrack')"><span class="slider"></span></label>
+            </div>
+          </div>
+          <div class="svc-item">
+            <div class="svc-info"><div class="svc-title">[ 2. DPS ]</div></div>
+            <div class="svc-controls">
+              <div class="svc-status" id="st-dps">RUNNING</div>
+              <label class="switch"><input type="checkbox" checked onchange="toggleWindowsService('DPS', this.checked, 'st-dps')"><span class="slider"></span></label>
+            </div>
+          </div>
+          <div class="svc-item">
+            <div class="svc-info"><div class="svc-title">[ 3. PcaSvc ]</div></div>
+            <div class="svc-controls">
+              <div class="svc-status" id="st-pcasvc">RUNNING</div>
+              <label class="switch"><input type="checkbox" checked onchange="toggleWindowsService('PcaSvc', this.checked, 'st-pcasvc')"><span class="slider"></span></label>
+            </div>
+          </div>
+          <div class="svc-item">
+            <div class="svc-info"><div class="svc-title">[ 4. SysMain ]</div></div>
+            <div class="svc-controls">
+              <div class="svc-status" id="st-sysmain">RUNNING</div>
+              <label class="switch"><input type="checkbox" checked onchange="toggleWindowsService('SysMain', this.checked, 'st-sysmain')"><span class="slider"></span></label>
+            </div>
+          </div>
+          <div class="svc-item">
+            <div class="svc-info"><div class="svc-title">[ 5. SsdpSrv ]</div></div>
+            <div class="svc-controls">
+              <div class="svc-status" id="st-ssdpsrv">RUNNING</div>
+              <label class="switch"><input type="checkbox" checked onchange="toggleWindowsService('SSDPSRV', this.checked, 'st-ssdpsrv')"><span class="slider"></span></label>
+            </div>
+          </div>
+          <div class="svc-item">
+            <div class="svc-info"><div class="svc-title">[ 6. UmRdpService ]</div></div>
+            <div class="svc-controls">
+              <div class="svc-status" id="st-umrdpservice">RUNNING</div>
+              <label class="switch"><input type="checkbox" checked onchange="toggleWindowsService('UmRdpService', this.checked, 'st-umrdpservice')"><span class="slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <div id="tab-display" class="tab-pane" style="display: none;">
+      <!-- Header Banner -->
+      <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;">
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <div style="width: 50px; height: 50px; background: rgba(0,255,255,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0,255,255,0.3);">
+            <svg style="width:24px; height:24px; fill:#00ffff;" viewBox="0 0 24 24"><path d="M21 3H3c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+          </div>
+          <div>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Display</h2>
+            <p style="margin: 5px 0 0 0; font-size: 13px; color: var(--text-muted); font-weight: 600;">Otimizações de vídeo e monitor</p>
+          </div>
+        </div>
+      </div>
+      
+      <style>
+      .slider-btn {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #fff;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.2s;
+      }
+      .slider-btn:hover { background: rgba(255,255,255,0.05); }
+      .slider-val-box {
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 6px;
+        padding: 4px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        min-width: 60px;
+        text-align: center;
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 4px;
+      }
+      .purple-slider {
+        -webkit-appearance: none;
+        height: 6px;
+        background: #2a2a2a;
+        border-radius: 4px;
+        outline: none;
+      }
+      .purple-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        border: 2px solid #fff;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
+        transition: transform 0.1s;
+      }
+      .purple-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.9), 0 2px 6px rgba(0, 0, 0, 0.5);
+      }
+      .display-section-title {
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--text-muted);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+      }
+      .display-presets-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 30px;
+      }
+      .display-preset-card {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 10px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .display-preset-card:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.1);
+        transform: translateY(-2px);
+      }
+      .display-preset-title {
+        font-weight: 700;
+        font-size: 14px;
+        color: #fff;
+        margin-bottom: 5px;
+      }
+      .display-preset-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.4;
+      }
+      .display-profiles-box {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+      }
+      .display-profiles-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+      .display-save-btn {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .display-save-btn:hover {
+        background: rgba(255,255,255,0.05);
+      }
+      </style>
+      <script>
+      function updateSliderBg(el) {
+        const min = parseFloat(el.min) || 0;
+        const max = parseFloat(el.max) || 100;
+        const val = parseFloat(el.value);
+        const percentage = ((val - min) / (max - min)) * 100;
+        el.style.background = `linear-gradient(to right, #ffffff ${percentage}%, #2a2a2a ${percentage}%)`;
+      }
+      function updateDisplaySlider(id, change) {
+        const el = document.getElementById(id);
+        if(!el) return;
+        let val = parseFloat(el.value) + parseFloat(change);
+        if(val < parseFloat(el.min)) val = el.min;
+        if(val > parseFloat(el.max)) val = el.max;
+        el.value = val;
+        el.dispatchEvent(new Event('input'));
+      }
+      function applyDisplayPreset(sat, temp, gamma) {
+        const s = document.getElementById('disp-saturation-slider');
+        const t = document.getElementById('disp-temperature-slider');
+        const g = document.getElementById('disp-gamma-slider');
+        if(s) { s.value = sat; s.dispatchEvent(new Event('input')); }
+        if(t) { t.value = temp; t.dispatchEvent(new Event('input')); }
+        if(g) { g.value = gamma; g.dispatchEvent(new Event('input')); }
+      }
+      function saveDisplayProfile() {
+        const header = document.querySelector('.display-profiles-header');
+        header.innerHTML = `
+            <div class="display-section-title" style="margin-bottom: 0; padding-top: 5px;">NOME DO PERFIL:</div>
+            <div style="display: flex; gap: 10px;">
+              <input type="text" id="new-profile-name" placeholder="Ex: CS2..." style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; padding: 4px 10px; font-size: 13px; outline: none; width: 120px;">
+              <button class="display-save-btn" style="background: rgba(255,255,255,0.1); color: #ffffff; border-color: rgba(255,255,255,0.3);" onclick="confirmSaveProfile()">Salvar</button>
+              <button class="display-save-btn" onclick="cancelSaveProfile()">X</button>
+            </div>
+        `;
+        document.getElementById('new-profile-name').focus();
+      }
+      function confirmSaveProfile() {
+        const name = document.getElementById('new-profile-name').value;
+        if (!name || name.trim() === "") {
+            cancelSaveProfile();
+            return;
+        }
+        const s = document.getElementById('disp-saturation-slider').value;
+        const t = document.getElementById('disp-temperature-slider').value;
+        const g = document.getElementById('disp-gamma-slider').value;
+        
+        let profiles = JSON.parse(localStorage.getItem('displayProfiles') || '[]');
+        profiles.push({ name: name.trim(), sat: s, temp: t, gamma: g });
+        localStorage.setItem('displayProfiles', JSON.stringify(profiles));
+        cancelSaveProfile();
+        renderDisplayProfiles();
+      }
+      function cancelSaveProfile() {
+        const header = document.querySelector('.display-profiles-header');
+        header.innerHTML = `
+            <div class="display-section-title" style="margin-bottom: 0;">MEUS PERFIS</div>
+            <button class="display-save-btn" onclick="saveDisplayProfile()"><svg style="width:14px;height:14px;fill:#fff;" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Salvar perfil atual</button>
+        `;
+      }
+      function deleteDisplayProfile(index) {
+        let profiles = JSON.parse(localStorage.getItem('displayProfiles') || '[]');
+        profiles.splice(index, 1);
+        localStorage.setItem('displayProfiles', JSON.stringify(profiles));
+        renderDisplayProfiles();
+      }
+      function renderDisplayProfiles() {
+        const container = document.getElementById('saved-profiles-container');
+        if(!container) return;
+        let profiles = JSON.parse(localStorage.getItem('displayProfiles') || '[]');
+        if (profiles.length === 0) {
+          container.innerHTML = 'Nenhum perfil salvo. Ajuste as cores e clique em "Salvar perfil atual".';
+          container.style = 'font-size: 13px; color: var(--text-muted);';
+          return;
+        }
+        container.style = 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;';
+        container.innerHTML = '';
+        profiles.forEach((p, index) => {
+          container.innerHTML += `
+            <div style="background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 600; color: #fff; cursor: pointer; flex: 1;" title="Clique para aplicar" onclick="applyDisplayPreset(${p.sat}, ${p.temp}, ${p.gamma})">${p.name}</span>
+              <button onclick="deleteDisplayProfile(${index})" title="Excluir perfil" style="background:transparent; border:none; color: #ff4444; cursor: pointer; font-size: 18px; line-height: 1; padding: 0 5px;">&times;</button>
+            </div>
+          `;
+        });
+      }
+      setTimeout(() => {
+        ['disp-saturation-slider', 'disp-temperature-slider', 'disp-gamma-slider'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) updateSliderBg(el);
+        });
+        renderDisplayProfiles();
+      }, 100);
+      </script>
+      <div>
+        <div class="display-section-title">PRESETS</div>
+        <div class="display-presets-grid">
+          <div class="display-preset-card" onclick="applyDisplayPreset(50, 6500, 1.00)">
+            <div class="display-preset-title">Padrão</div>
+            <div class="display-preset-desc">Volta tudo ao neutro: cores e brilho originais.</div>
+          </div>
+          <div class="display-preset-card" onclick="applyDisplayPreset(80, 7000, 1.10)">
+            <div class="display-preset-title">Vibrante</div>
+            <div class="display-preset-desc">Cores mais vivas para destacar inimigos.</div>
+          </div>
+          <div class="display-preset-card" onclick="applyDisplayPreset(45, 5500, 0.90)">
+            <div class="display-preset-title">Cinema</div>
+            <div class="display-preset-desc">Tom quente e suave para assistir.</div>
+          </div>
+          <div class="display-preset-card" onclick="applyDisplayPreset(75, 8000, 1.30)">
+            <div class="display-preset-title">FiveM Night</div>
+            <div class="display-preset-desc">Para servidores noturnos: clareia e esfria a imagem.</div>
+          </div>
+          <div class="display-preset-card" onclick="applyDisplayPreset(90, 6000, 1.15)">
+            <div class="display-preset-title">Competitivo</div>
+            <div class="display-preset-desc">Máximo de visibilidade e contraste.</div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="display: flex; flex-direction: column; gap: 30px; background: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+        
+        <!-- Saturação -->
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-weight: 600; font-size: 14px; color: #fff;">Saturação</div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button class="slider-btn" onclick="updateDisplaySlider('disp-saturation-slider', -1)">-</button>
+              <div class="slider-val-box"><span id="val-disp-saturation">50</span> <span style="color: var(--text-muted); font-size: 11px;">%</span></div>
+              <button class="slider-btn" onclick="updateDisplaySlider('disp-saturation-slider', 1)">+</button>
+            </div>
+          </div>
+          <input type="range" id="disp-saturation-slider" class="purple-slider" min="0" max="100" value="50" style="width: 100%; cursor: pointer;" oninput="document.getElementById('val-disp-saturation').innerText = this.value; updateSliderBg(this); if(typeof require !== 'undefined') require('electron').ipcRenderer.send('change-saturation', this.value / 50);">
+        </div>
+
+        <!-- Temperatura -->
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-weight: 600; font-size: 14px; color: #fff;">Temperatura</div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button class="slider-btn" onclick="updateDisplaySlider('disp-temperature-slider', -100)">-</button>
+              <div class="slider-val-box"><span id="val-disp-temperature">6500</span> <span style="color: var(--text-muted); font-size: 11px;">K</span></div>
+              <button class="slider-btn" onclick="updateDisplaySlider('disp-temperature-slider', 100)">+</button>
+            </div>
+          </div>
+          <input type="range" id="disp-temperature-slider" class="purple-slider" min="4000" max="10000" step="100" value="6500" style="width: 100%; cursor: pointer;" oninput="document.getElementById('val-disp-temperature').innerText = this.value; updateSliderBg(this);">
+        </div>
+
+        <!-- Gama -->
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-weight: 600; font-size: 14px; color: #fff;">Gama</div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button class="slider-btn" onclick="updateDisplaySlider('disp-gamma-slider', -0.05)">-</button>
+              <div class="slider-val-box"><span id="val-disp-gamma">1.00</span></div>
+              <button class="slider-btn" onclick="updateDisplaySlider('disp-gamma-slider', 0.05)">+</button>
+            </div>
+          </div>
+          <input type="range" id="disp-gamma-slider" class="purple-slider" min="0.50" max="2.00" step="0.05" value="1.00" style="width: 100%; cursor: pointer;" oninput="document.getElementById('val-disp-gamma').innerText = parseFloat(this.value).toFixed(2); updateSliderBg(this);">
+        </div>
+
+      </div>
+    </div>
+
+    <div id="tab-config" class="tab-pane" style="display: none; padding: 20px;">
+      <div class="page-header">
+        <h1 class="page-title">Configurações</h1>
+        <p class="page-subtitle">Gerencie sua conta e preferências do aplicativo</p>
+      </div>
+      <div id="paineis-config"></div>
+    </div>
+
+  </div>
+
+
+  </main>
+</div>
+
+<!-- IPC JS -->
+<script>
+let child_process = null;
+try { child_process = require('child_process'); } catch(e) {}
+
+function toggleWindowsService(serviceName, enable, statusElementId) {
+    const statusEl = document.getElementById(statusElementId);
+    statusEl.innerText = "WAIT...";
+    statusEl.style.color = "#ffaa00";
+    
+    if (!child_process) {
+        setTimeout(() => updateStatusVisual(enable, statusEl), 500);
+        return;
+    }
+
+    // Tenta rodar normalmente (caso o app já esteja como Administrador)
+    const cmd = enable 
+        ? `sc config "${serviceName}" start= demand && net start "${serviceName}"` 
+        : `sc config "${serviceName}" start= disabled && net stop "${serviceName}"`;
+        
+    child_process.exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
+        if (error) {
+            // Se der erro de Acesso Negado (System error 5), pedimos elevação UAC (Administrador)
+            const psCmd = enable
+                ? `Start-Process cmd -ArgumentList '/c sc config "${serviceName}" start= demand & net start "${serviceName}"' -Verb RunAs -WindowStyle Hidden -Wait`
+                : `Start-Process cmd -ArgumentList '/c sc config "${serviceName}" start= disabled & net stop "${serviceName}"' -Verb RunAs -WindowStyle Hidden -Wait`;
+                
+            child_process.exec(`powershell -Command "${psCmd}"`, { windowsHide: true }, (err) => {
+                if (err) {
+                    // Usuário cancelou o UAC ou outro erro
+                    updateStatusVisual(!enable, statusEl); // Reverte a interface
+                    // Dispara evento para voltar o switch para a posição anterior
+                    const sw = document.querySelector(`input[onchange*="${statusElementId}"]`);
+                    if(sw) sw.checked = !enable;
+                } else {
+                    updateStatusVisual(enable, statusEl);
+                }
+            });
+        } else {
+            updateStatusVisual(enable, statusEl);
+        }
+    });
+}
+
+function updateStatusVisual(enable, statusEl) {
+    statusEl.style.color = "";
+    if (enable) {
+        statusEl.innerText = "RUNNING";
+        statusEl.className = "svc-status";
+    } else {
+        statusEl.innerText = "STOPPED";
+        statusEl.className = "svc-status stopped";
+    }
+}
+
+try {
+  const { ipcRenderer } = require('electron');
+  
+  // App min/close
+  document.getElementById('min-btn').addEventListener('click', () => {
+    ipcRenderer.send('window-min');
+  });
+  document.getElementById('close-btn').addEventListener('click', () => {
+    ipcRenderer.send('window-close');
+  });
+
+  // Auto-boot animation
+  document.addEventListener('DOMContentLoaded', () => {
+    const bootScreen = document.getElementById('boot-screen');
+    const bootText = document.getElementById('boot-text');
+    const bootBar = document.getElementById('boot-bar');
+    
+    setTimeout(() => {
+      if (bootBar) bootBar.style.width = '100%';
+      setTimeout(() => { if(bootText) bootText.textContent = 'CARREGANDO DRIVERS...'; }, 400);
+      setTimeout(() => { if(bootText) bootText.textContent = 'ESTABELECENDO CONEXÃO COM HARDWARE...'; }, 900);
+      setTimeout(() => { if(bootText) bootText.textContent = 'SISTEMA PRONTO.'; }, 1400);
+    }, 100);
+    
+    try {
+      const audioBemVindo = new Audio('bem vindo.mp3');
+      audioBemVindo.volume = 0.8;
+      audioBemVindo.play().catch(e => console.log(e));
+    } catch(e) {}
+    
+    setTimeout(() => {
+      if (bootScreen) bootScreen.classList.add('hidden');
+      document.body.classList.remove('booting');
+    }, 1800);
+  });
+} catch (e) {
+  console.log('Electron IPC not found, running in browser mode.');
+}
+// ----------------------------
+
+
+// Selecionar Mouse
+function selectGalleryMouse(element, imgSrc, title) {
+  document.querySelectorAll('.mouse-card').forEach(card => card.classList.remove('selected'));
+  element.classList.add('selected');
+  const mainImg = document.querySelector('.mouse-img-center');
+  mainImg.src = imgSrc;
+  mainImg.alt = title;
+
+  // Lógica de Zoom Dinâmico Restaurada e Aumentada
+  mainImg.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
+  
+  if (imgSrc.includes('GPRO SUPER.png')) {
+    mainImg.style.transform = 'scale(2.2)'; // Mouse branco
+  } else if (imgSrc.includes('g pro superlight .png')) {
+    mainImg.style.transform = 'scale(2.00)'; // Mouse preto com logo azul
+  } else if (imgSrc.includes('b5c0301a')) {
+    mainImg.style.transform = 'scale(0.85)'; // Mouse preto texturizado
+  } else if (imgSrc.includes('viper V3.png')) {
+    mainImg.style.transform = 'scale(1.70)';
+  } else if (imgSrc.includes('Attack shark x11')) {
+    mainImg.style.transform = 'scale(1.7)';
+  } else if (imgSrc.includes('mousenovo.png')) {
+    mainImg.style.transform = 'scale(1.50)';
+  } else if (imgSrc.includes('g403.png')) {
+    mainImg.style.transform = 'scale(1.50)';
+  } else if (imgSrc.includes('pulsar x2h.png')) {
+    mainImg.style.transform = 'scale(1.70)';
+  } else if (imgSrc.includes('Ajazz 179 pro.png')) {
+    mainImg.style.transform = 'scale(0.95)';
+  } else if (imgSrc.includes('Scyrox v8.png')) {
+    mainImg.style.transform = 'scale(1.50)';
+  } else if (imgSrc.includes('WLMOUSE Sword.png')) {
+    mainImg.style.transform = 'scale(1.65)';
+  } else if (imgSrc.includes('Lamzu.png')) {
+    mainImg.style.transform = 'scale(1.50)';
+  } else if (imgSrc.includes('NPLAY Aim 10.0.png')) {
+    mainImg.style.transform = 'scale(0.75)';
+  } else if (imgSrc.includes('Attack shark r1.png') || imgSrc.includes('attack shark x3.png')) {
+    mainImg.style.transform = 'scale(1.7)';
+  } else if (imgSrc.includes('dragonfly') || imgSrc.includes('delux')) {
+    mainImg.style.transform = 'scale(1.7)';
+  } else if (imgSrc.includes('fallen pantera')) {
+    mainImg.style.transform = 'scale(1.5)';
+  } else if (imgSrc.includes('b5c0301a')) { // O mouse preto específico reduzido
+    mainImg.style.transform = 'scale(0.85)';
+  } else {
+    // Outros
+    mainImg.style.transform = 'scale(1.1)';
+  }
+}
+function switchTab(tabId, element) {
+  document.querySelectorAll('.tab-pane').forEach(tab => tab.style.display = 'none');
+  document.getElementById(tabId).style.display = 'block';
+  
+  document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+  if (element) element.classList.add('active');
+
+  if (tabId === 'tab-display') {
+    ['disp-saturation-slider', 'disp-temperature-slider', 'disp-gamma-slider'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) updateSliderBg(el);
+    });
+  }
+}
+
+function launchFiveM() {
+  const btn = document.getElementById('btn-launch-fivem');
+  
+  const closeApps = document.getElementById('cb-priority') && document.getElementById('cb-priority').checked;
+  const clearCache = document.getElementById('cb-cache') && document.getElementById('cb-cache').checked;
+  const autoBoost = document.getElementById('cb-flushdns') && document.getElementById('cb-flushdns').checked;
+  
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+
+  try {
+    require('electron').ipcRenderer.send('launch-fivem', { closeApps: closeApps, clearCache: clearCache, highPriority: autoBoost, flushDns: autoBoost });
+  } catch(e){}
+
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }, 2000);
+}
+
+function applySensi() {
+  const speed = document.getElementById('sensi-slider').value;
+  // If the checkbox is "Desativar", then checked = TRUE means accel = FALSE
+  const disableAccel = document.getElementById('cb-accel').checked;
+  const accel = !disableAccel;
+  const btn = document.getElementById('btn-apply-sensi');
+  
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+  btn.innerText = 'Aplicando...';
+  
+  try {
+    require('electron').ipcRenderer.send('apply-sensi', { speed: parseInt(speed), accel });
+  } catch(e) {}
+}
+
+function toggleMira() {
+  const active = document.getElementById('cb-crosshair-active').checked;
+  
+  try {
+    require('electron').ipcRenderer.send('apply-mira', { active });
+    if(active) {
+      sendMiraUpdate(); // Manda imediatamente para já ficar do jeito certo se a janela já existir
+      setTimeout(sendMiraUpdate, 500); // Manda de novo caso seja a 1a vez e a janela estivesse abrindo
+    }
+  } catch(e) {}
+}
+
+function sendMiraUpdate() {
+  const active = document.getElementById('cb-crosshair-active').checked;
+  const scaleXRaw = document.getElementById('mira-scaleX').value;
+  const scaleYRaw = document.getElementById('mira-scaleY').value;
+  const posXRaw = document.getElementById('mira-posX').value;
+  const posYRaw = document.getElementById('mira-posY').value;
+  const opacityRaw = document.getElementById('mira-opacity').value;
+  const colorRaw = document.getElementById('mira-color').value;
+  const hasOutlineRaw = document.getElementById('mira-has-outline').checked;
+  const outlineThicknessRaw = document.getElementById('mira-outline-thickness').value;
+  const outlineColorRaw = document.getElementById('mira-outline-color').value;
+
+  try {
+    localStorage.setItem('mira_config', JSON.stringify({
+      active, scaleX: scaleXRaw, scaleY: scaleYRaw, posX: posXRaw, posY: posYRaw, 
+      opacity: opacityRaw, color: colorRaw, hasOutline: hasOutlineRaw, 
+      outlineThickness: outlineThicknessRaw, outlineColor: outlineColorRaw,
+      shape: window.currentMiraShape
+    }));
+  } catch(e){}
+
+  if (!active) return; // Don't send updates if it's inactive
+
+  const scaleX = scaleXRaw / 100;
+  const scaleY = scaleYRaw / 100;
+  const posX = parseInt(posXRaw);
+  const posY = parseInt(posYRaw);
+  const opacity = opacityRaw / 100;
+  const color = colorRaw;
+  const hasOutline = hasOutlineRaw;
+  const outlineThickness = outlineThicknessRaw;
+  const outlineColor = outlineColorRaw;
+  const shape = window.currentMiraShape;
+
+  try {
+    require('electron').ipcRenderer.send('update-crosshair', {
+      scaleX,
+      scaleY,
+      posX,
+      posY,
+      opacity,
+      color,
+      hasOutline,
+      outlineThickness,
+      outlineColor,
+      shape
+    });
+  } catch(e) {}
+}
+
+// Add listener to the checkbox to also toggle automatically
+document.getElementById('cb-crosshair-active').addEventListener('change', toggleMira);
+
+function restoreSensi() {
+  const slider = document.getElementById('sensi-slider');
+  slider.value = 10;
+  // O padrão do Windows é ter aceleração ligada, então "Desativar" deve estar desmarcado (false)
+  document.getElementById('cb-accel').checked = false;
+  document.getElementById('sensi-val-display').innerText = '10';
+  if (typeof updateSliderFill === 'function') updateSliderFill();
+  
+  applySensi();
+}
+
+try {
+  const ipc = require('electron').ipcRenderer;
+
+  ipc.on('apply-sensi-reply', (event, success) => {
+    const btn = document.getElementById('btn-apply-sensi');
+    const fb = document.getElementById('sensi-feedback');
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.innerText = 'Aplicar Alterações';
+    
+    if(success) {
+      fb.innerText = 'Aplicado com sucesso!';
+      fb.style.color = '#2ed573';
+      if(typeof showToast === 'function') showToast('Configurações de Sensi Aplicadas!', '', true);
+    } else {
+      fb.innerText = 'Erro ao aplicar!';
+      fb.style.color = '#ff4757';
+    }
+    fb.style.opacity = '1';
+    setTimeout(() => { fb.style.opacity = '0'; }, 3000);
+  });
+} catch(e){}
+
+function selectMiraResolution(optionEl) {
+  // close the dropdown
+  optionEl.parentElement.style.display = 'none';
+  
+  const val = optionEl.getAttribute('data-val');
+  const text = optionEl.innerText;
+  
+  // update the display text
+  document.getElementById('mira-resolution-display').innerText = text;
+  
+  if (val === 'custom') return;
+  
+  const dataX = optionEl.getAttribute('data-x');
+  const dataY = optionEl.getAttribute('data-y');
+  
+  const parts = val.split('x');
+  if (parts.length === 2) {
+    const w = parseInt(parts[0]);
+    const h = parseInt(parts[1]);
+    const mw = window.screen.width;
+    const mh = window.screen.height;
+    
+    let offsetX = 0;
+    let offsetY = 0;
+    
+    if (dataX !== null && dataY !== null) {
+      offsetX = parseInt(dataX);
+      offsetY = parseInt(dataY);
+    } else {
+      offsetX = Math.round((w / 2) - (mw / 2));
+      offsetY = Math.round((h / 2) - (mh / 2));
+    }
+    
+    const sliderX = document.getElementById('mira-posX');
+    const sliderY = document.getElementById('mira-posY');
+    
+    sliderX.value = offsetX;
+    sliderY.value = offsetY;
+    
+    document.getElementById('miraPosXVal').innerText = offsetX + 'px';
+    document.getElementById('miraPosYVal').innerText = offsetY + 'px';
+    
+    sendMiraUpdate();
+  }
+}
+
+// Fecha o dropdown de resolução se clicar fora dele
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.custom-select-wrapper')) {
+    const opts = document.querySelector('.custom-select-options');
+    if (opts) opts.style.display = 'none';
+  }
+});
+
+function applyPrecisionTweaks(tweaksOverride) {
+  const tweaks = tweaksOverride || {};
+  if (!tweaksOverride) {
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      if (cb.id && cb.id.startsWith('cb-')) {
+        const key = cb.id.replace('cb-', '');
+        tweaks[key] = cb.checked;
+      }
+    });
+  }
+
+  const btn = document.getElementById('btn-apply-precision');
+  if(btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<svg style="width:16px;height:16px;fill:white;animation:spin 1s linear infinite;" viewBox="0 0 24 24"><path d="M12 2v4c4.42 0 8 3.58 8 8h4c0-6.63-5.37-12-12-12z"/></svg> Aplicando...`;
+  }
+  
+  // Update progress bar UI manually
+  if (document.getElementById('opt-percent')) document.getElementById('opt-percent').innerText = '0%';
+  if (document.getElementById('opt-bar-fill')) document.getElementById('opt-bar-fill').style.width = '0%';
+  if (document.getElementById('opt-status-text')) document.getElementById('opt-status-text').innerText = 'Aplicando modificações do sistema...';
+
+  try {
+    require('electron').ipcRenderer.send('apply-precision-tweaks', tweaks);
+  } catch(e) {
+    console.error('Não foi possível enviar os ajustes do mouse:', e);
+    if (typeof showToast === 'function') showToast('Erro ao aplicar ajustes', e.message || 'Não foi possível comunicar com o aplicativo.', false);
+  }
+}
+
+function setAllMouseTweaks(checked) {
+  const mouseCheckboxes = document.querySelectorAll('#tab-mouse .mouse-config-grid input[type="checkbox"]');
+  const previousStates = Array.from(mouseCheckboxes, checkbox => checkbox.checked);
+  const tweaks = {};
+  mouseCheckboxes.forEach(checkbox => {
+    checkbox.checked = checked;
+    tweaks[checkbox.id.replace(/^cb-/, '')] = checked;
+  });
+
+  if (typeof updateProgress === 'function') updateProgress();
+  if (checked) {
+    if (!confirm('Marcar tudo também aplicará todos os ajustes da aba Mouse. O Windows pode solicitar permissão de administrador. Deseja continuar?')) {
+      mouseCheckboxes.forEach((checkbox, index) => {
+        checkbox.checked = previousStates[index];
+      });
+      if (typeof updateProgress === 'function') updateProgress();
+      return;
+    }
+    applyPrecisionTweaks(tweaks);
+    if (typeof showToast === 'function') showToast('Ajustes selecionados', 'Aplicando todos os ajustes da aba Mouse.', true);
+  } else if (typeof showToast === 'function') {
+    showToast('Seleção limpa', 'Os ajustes já aplicados ao Windows não são revertidos ao desmarcar.', true);
+  }
+}
+
+document.getElementById('btn-mark-all-mouse').addEventListener('click', () => setAllMouseTweaks(true));
+document.getElementById('btn-unmark-all-mouse').addEventListener('click', () => setAllMouseTweaks(false));
+
+function revertPrecisionTweaks() {
+  try {
+    require('electron').ipcRenderer.send('revert-precision-tweaks');
+  } catch(e) {}
+}
+
+// --- Aim Trainer Logic ---
+let aimMode = 'flick'; // 'flick' or 'tracking'
+let aimDifficulty = 'medio'; // 'facil', 'medio', 'dificil'
+let aimScore = 0;
+let aimTimeLeft = 30;
+let aimGameInterval = null;
+let aimTimerInterval = null;
+let aimTarget = null;
+let aimArena = null;
+let isAimGameRunning = false;
+let trackingHoverTime = 0;
+let trackingTotalTime = 0;
+let trackingInterval = null;
+let isHoveringTarget = false;
+
+// Tracking movement vars
+let targetX = 0;
+let targetY = 0;
+let targetVelX = 3;
+let targetVelY = 3;
+
+function setAimMode(mode) {
+  if (isAimGameRunning) return;
+  aimMode = mode;
+  
+  const btnFlick = document.getElementById('btn-mode-flick');
+  const btnTrack = document.getElementById('btn-mode-tracking');
+  
+  if (mode === 'flick') {
+    btnFlick.style.background = 'var(--primary-color)';
+    btnFlick.style.color = '#fff';
+    btnFlick.style.boxShadow = '0 2px 10px color-mix(in srgb, var(--theme-color) 30%, transparent)';
+    
+    btnTrack.style.background = 'transparent';
+    btnTrack.style.color = 'var(--text-muted)';
+    btnTrack.style.boxShadow = 'none';
+  } else {
+    btnTrack.style.background = 'var(--primary-color)';
+    btnTrack.style.color = '#fff';
+    btnTrack.style.boxShadow = '0 2px 10px color-mix(in srgb, var(--theme-color) 30%, transparent)';
+    
+    btnFlick.style.background = 'transparent';
+    btnFlick.style.color = 'var(--text-muted)';
+    btnFlick.style.boxShadow = 'none';
+  }
+}
+
+function setAimDifficulty(level) {
+  if (isAimGameRunning) return;
+  aimDifficulty = level;
+  
+  const btnFacil = document.getElementById('btn-diff-facil');
+  const btnMedio = document.getElementById('btn-diff-medio');
+  const btnDificil = document.getElementById('btn-diff-dificil');
+  
+  // Reset all
+  [btnFacil, btnMedio, btnDificil].forEach(btn => {
+    btn.style.background = 'transparent';
+    btn.style.color = 'var(--text-muted)';
+    btn.style.boxShadow = 'none';
+  });
+  
+  let activeBtn;
+  if (level === 'facil') activeBtn = btnFacil;
+  else if (level === 'medio') activeBtn = btnMedio;
+  else if (level === 'dificil') activeBtn = btnDificil;
+  
+  if (activeBtn) {
+    activeBtn.style.background = 'var(--primary-color)';
+    activeBtn.style.color = '#fff';
+    activeBtn.style.boxShadow = '0 2px 10px color-mix(in srgb, var(--theme-color) 30%, transparent)';
+  }
+}
+
+function startAimTrainer() {
+  aimScore = 0;
+  aimTimeLeft = 30;
+  isAimGameRunning = true;
+  trackingHoverTime = 0;
+  trackingTotalTime = 0;
+  isHoveringTarget = false;
+  
+  aimArena = document.getElementById('aim-arena');
+  
+  // Re-fetch target just in case it was cloned
+  aimTarget = document.getElementById('aim-target');
+  
+  document.getElementById('aim-overlay').style.display = 'none';
+  document.getElementById('aim-score').innerText = '0';
+  if(document.getElementById('aim-score-bar')) document.getElementById('aim-score-bar').style.width = '0%';
+  document.getElementById('aim-time').innerText = '30s';
+  aimTarget.style.display = 'block';
+
+  if (aimMode === 'flick') {
+    spawnFlickTarget();
+  } else {
+    startTrackingTarget();
+  }
+
+  // Timer
+  aimTimerInterval = setInterval(() => {
+    aimTimeLeft--;
+    document.getElementById('aim-time').innerText = aimTimeLeft + 's';
+    
+    if (aimMode === 'tracking') {
+      trackingTotalTime++;
+      let percentage = trackingTotalTime > 0 ? (trackingHoverTime / trackingTotalTime) * 100 : 0;
+      if(percentage > 100) percentage = 100;
+      document.getElementById('aim-score').innerText = percentage.toFixed(1) + '%';
+      if(document.getElementById('aim-score-bar')) document.getElementById('aim-score-bar').style.width = percentage + '%';
+    }
+
+    if (aimTimeLeft <= 0) {
+      endAimTrainer();
+    }
+  }, 1000);
+}
+
+function playHitSound() {
+  try {
+    if (!window.aimAudioCtx) window.aimAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (window.aimAudioCtx.state === 'suspended') window.aimAudioCtx.resume();
+    const osc = window.aimAudioCtx.createOscillator();
+    const gain = window.aimAudioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200, window.aimAudioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(2000, window.aimAudioCtx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.15, window.aimAudioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, window.aimAudioCtx.currentTime + 0.1);
+    osc.connect(gain);
+    gain.connect(window.aimAudioCtx.destination);
+    osc.start();
+    osc.stop(window.aimAudioCtx.currentTime + 0.1);
+  } catch(e) {}
+}
+
+function spawnFlickTarget() {
+  if (!isAimGameRunning) return;
+  
+  const arenaWidth = aimArena.clientWidth;
+  const arenaHeight = aimArena.clientHeight;
+  let targetSize = 40;
+  if (aimDifficulty === 'facil') targetSize = 65;
+  else if (aimDifficulty === 'dificil') targetSize = 20;
+  
+  aimTarget.style.width = targetSize + 'px';
+  aimTarget.style.height = targetSize + 'px';
+  aimTarget.style.borderRadius = '50%';
+  aimTarget.style.background = 'radial-gradient(circle at 30% 30%, #ffffff, #00e5ff)';
+  aimTarget.style.boxShadow = '0 0 20px rgba(0,229,255,0.6)';
+  
+  const maxX = arenaWidth - targetSize;
+  const maxY = arenaHeight - targetSize;
+  
+  const randomX = Math.floor(Math.random() * maxX);
+  const randomY = Math.floor(Math.random() * maxY);
+  
+  aimTarget.style.left = randomX + 'px';
+  aimTarget.style.top = randomY + 'px';
+  
+  aimTarget.onmousedown = function() {
+    if (!isAimGameRunning) return;
+    playHitSound();
+    aimScore++;
+    document.getElementById('aim-score').innerText = aimScore;
+    if(document.getElementById('aim-score-bar')) {
+      let pw = Math.min(aimScore * 3.33, 100);
+      document.getElementById('aim-score-bar').style.width = pw + '%';
+    }
+    
+    // Animate target hit
+    aimTarget.style.transform = 'scale(0)';
+    setTimeout(() => {
+      aimTarget.style.transform = 'scale(1)';
+      spawnFlickTarget();
+    }, 100);
+  };
+}
+
+function startTrackingTarget() {
+  if (!isAimGameRunning) return;
+  
+  aimTarget.onmousedown = null; // Disable clicking
+  
+  const arenaWidth = aimArena.clientWidth;
+  const arenaHeight = aimArena.clientHeight;
+  let targetWidth = 40;
+  let speedMulti = 1;
+  
+  if (aimDifficulty === 'facil') { targetWidth = 65; speedMulti = 0.6; }
+  else if (aimDifficulty === 'dificil') { targetWidth = 20; speedMulti = 1.6; }
+  
+  let targetHeight = targetWidth * 2.5;
+  
+  aimTarget.style.width = targetWidth + 'px';
+  aimTarget.style.height = targetHeight + 'px';
+  aimTarget.style.borderRadius = (targetWidth / 2) + 'px';
+  
+  targetVelX = (Math.random() > 0.5 ? 3 : -3) * speedMulti;
+  targetVelY = (Math.random() > 0.5 ? 3 : -3) * speedMulti;
+  
+  targetX = Math.random() * (arenaWidth - targetWidth);
+  targetY = Math.random() * (arenaHeight - targetHeight);
+  
+  aimTarget.addEventListener('mouseenter', () => isHoveringTarget = true);
+  aimTarget.addEventListener('mouseleave', () => isHoveringTarget = false);
+  
+  trackingInterval = setInterval(() => {
+    if (!isAimGameRunning) return;
+    
+    if (isHoveringTarget) {
+      trackingHoverTime += 0.016; // Approx 60fps frame time
+      aimTarget.style.boxShadow = '0 0 30px rgba(255,100,100,0.8)';
+      aimTarget.style.background = 'radial-gradient(circle at 30% 30%, #ffffff, #ff5555)';
+    } else {
+      aimTarget.style.boxShadow = '0 0 20px rgba(255,0,0,0.6)';
+      aimTarget.style.background = 'radial-gradient(circle at 30% 30%, #ff8888, #ff0000)';
+    }
+    
+    // Move target
+    targetX += targetVelX;
+    targetY += targetVelY;
+    
+    // Bounce off walls
+    if (targetX <= 0 || targetX >= arenaWidth - targetWidth) {
+      targetVelX *= -1;
+      targetX = Math.max(0, Math.min(targetX, arenaWidth - targetWidth));
+    }
+    if (targetY <= 0 || targetY >= arenaHeight - targetHeight) {
+      targetVelY *= -1;
+      targetY = Math.max(0, Math.min(targetY, arenaHeight - targetHeight));
+    }
+    
+    // Randomly change direction slightly
+    if (Math.random() < 0.02) {
+      targetVelX = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2) * speedMulti;
+      targetVelY = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2) * speedMulti;
+    }
+    
+    aimTarget.style.left = targetX + 'px';
+    aimTarget.style.top = targetY + 'px';
+    
+  }, 16); // ~60 FPS
+}
+
+function endAimTrainer() {
+  isAimGameRunning = false;
+  clearInterval(aimTimerInterval);
+  if (trackingInterval) clearInterval(trackingInterval);
+  
+  aimTarget.style.display = 'none';
+  const overlay = document.getElementById('aim-overlay');
+  overlay.style.display = 'flex';
+  
+  let finalScoreText = aimMode === 'flick' ? aimScore + ' Hits' : document.getElementById('aim-score').innerText + ' Precisão';
+  
+    overlay.innerHTML = `
+    <div style="text-align: center; background: linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(10, 10, 15, 0.98) 100%); padding: 25px 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 30px color-mix(in srgb, var(--theme-color) 15%, transparent); backdrop-filter: blur(20px); min-width: 320px;">
+      
+      <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+        <div style="width: 44px; height: 44px; border-radius: 50%; background: color-mix(in srgb, var(--theme-color) 15%, transparent); display: flex; justify-content: center; align-items: center; margin-bottom: 10px; box-shadow: inset 0 0 15px color-mix(in srgb, var(--theme-color) 30%, transparent), 0 0 20px color-mix(in srgb, var(--theme-color) 20%, transparent);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <h2 style="color: #fff; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; font-family: 'Inter', sans-serif;">Treino Concluído</h2>
+        <p style="color: #888; margin: 5px 0 0 0; font-size: 13px;">Resumo do seu desempenho</p>
+      </div>
+      
+      <div style="background: linear-gradient(180deg, rgba(0,255,136,0.05) 0%, rgba(0,255,136,0.01) 100%); border: 1px solid rgba(0,255,136,0.15); border-radius: 12px; padding: 20px 15px; margin-bottom: 25px; box-shadow: inset 0 2px 10px rgba(0,255,136,0.05);">
+        <p style="color: rgba(0,255,136,0.7); margin: 0 0 8px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">Pontuação Final</p>
+        <p style="color: #00ff88; font-size: 38px; font-weight: 900; margin: 0; text-shadow: 0 0 20px rgba(0,255,136,0.4); font-family: 'Inter', sans-serif; letter-spacing: -1px;">${finalScoreText}</p>
+      </div>
+      
+      <button class="btn-otimizar" style="background: linear-gradient(90deg, var(--primary-color), #ffffff); color: #fff; border: none; padding: 14px 30px; width: 100%; font-size: 13px; border-radius: 10px; box-shadow: 0 8px 20px color-mix(in srgb, var(--theme-color) 30%, transparent); text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); cursor: pointer; position: relative; overflow: hidden;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 25px color-mix(in srgb, var(--theme-color) 50%, transparent)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px color-mix(in srgb, var(--theme-color) 30%, transparent)';" onclick="startAimTrainer()">
+        JOGAR NOVAMENTE
+      </button>
+    </div>
+  `;
+  
+  // Cleanup event listeners
+  aimTarget.onmousedown = null;
+  const newTarget = aimTarget.cloneNode(true);
+  aimTarget.parentNode.replaceChild(newTarget, aimTarget);
+  aimTarget = newTarget; // Removes all mouseenter/mouseleave listeners
+}
+
+try {
+  const ipc = require('electron').ipcRenderer;
+  
+  ipc.on('precision-tweaks-reply', (event, success) => {
+    const btn = document.getElementById('btn-apply-precision');
+    if(btn) {
+      if(success) {
+        btn.innerHTML = `<svg style="width:16px;height:16px;fill:white;" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> APLICADO!`;
+        btn.classList.add('btn-success-anim');
+        setTimeout(() => {
+          btn.classList.remove('btn-success-anim');
+          btn.disabled = false;
+          btn.innerHTML = `<svg style="width:14px;height:14px;fill:white;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> APLICAR OTIMIZAÇÃO`;
+        }, 2000);
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = `<svg style="width:14px;height:14px;fill:white;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> APLICAR OTIMIZAÇÃO`;
+      }
+    }
+    
+    if(typeof updateProgress === 'function') {
+      updateProgress();
+    }
+    if(success && document.getElementById('opt-status-text')) {
+      document.getElementById('opt-status-text').innerText = 'Modificações aplicadas com sucesso!';
+      setTimeout(() => {
+        if(typeof updateProgress === 'function') updateProgress();
+      }, 3000);
+    }
+  });
+
+  ipc.on('revert-tweaks-reply', (event, success) => {
+    const btn = document.getElementById('btn-revert-precision');
+    if(btn) {
+      btn.disabled = false;
+      btn.innerText = 'Reverter Tudo';
+    }
+    
+    if(document.getElementById('opt-percent')) document.getElementById('opt-percent').innerText = '0%';
+    if(document.getElementById('opt-bar-fill')) document.getElementById('opt-bar-fill').style.width = '0%';
+    if(document.getElementById('opt-status-text')) document.getElementById('opt-status-text').innerText = success ? 'Sistema restaurado para os padrões!' : 'Erro ao reverter.';
+    if(success && typeof showToast === 'function') showToast('Padrões do Sistema Restaurados!', '', true);
+    
+    // Desmarcar tudo ao reverter
+    document.querySelectorAll('#tab-mouse .checkbox-item input').forEach(el => el.checked = false);
+  });
+} catch(e) {}
+
+// Atualiza o display numérico quando mexer no slider
+const slider = document.getElementById('sensi-slider');
+if(slider) {
+  function updateSliderFill() {
+    const val = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+    slider.style.background = `linear-gradient(to right, var(--theme-color) ${val}%, rgba(255, 255, 255, 0.08) ${val}%)`;
+  }
+  
+  slider.addEventListener('input', (e) => {
+    document.getElementById('sensi-val-display').innerText = e.target.value;
+    updateSliderFill();
+  });
+  
+  // Inicializa a cor correta
+  updateSliderFill();
+}
+
+// Atualização dinâmica da barra de progresso
+const configCheckboxes = document.querySelectorAll('.mouse-config-grid input[type="checkbox"]');
+const optPercent = document.getElementById('opt-percent');
+const optBarFill = document.getElementById('opt-bar-fill');
+const optStatusText = document.getElementById('opt-status-text');
+
+function updateProgress() {
+  const total = configCheckboxes.length;
+  const checked = document.querySelectorAll('.mouse-config-grid input[type="checkbox"]:checked').length;
+  
+  if (total === 0) return;
+  const percentage = Math.round((checked / total) * 100);
+  
+  if(optPercent) optPercent.textContent = percentage + '%';
+  if(optBarFill) optBarFill.style.width = percentage + '%';
+  
+  if(optStatusText) {
+    if (percentage === 0) {
+      optStatusText.textContent = 'Aguardando seleção...';
+    } else if (percentage === 100) {
+      optStatusText.textContent = 'Otimização Máxima!';
+    } else {
+      optStatusText.textContent = 'Otimizando...';
+    }
+  }
+}
+
+configCheckboxes.forEach(cb => {
+  cb.addEventListener('change', updateProgress);
+});
+
+
+updateProgress();
+
+// Sistema de Avatar Customizado
+const profilePic = document.getElementById('profile-pic');
+
+// Nome customizado removido - Agora é fixo.
+
+
+
+document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(checkbox => {
+  checkbox.addEventListener('change', (e) => {
+    const label = e.target.parentElement.querySelector('span');
+    const name = label ? label.innerText : 'Opção';
+    const status = e.target.checked ? 'Selecionado' : 'Desmarcado';
+    if(typeof showToast === 'function') {
+      showToast(`${name} ${status}!`, '', e.target.checked);
+    }
+    // Aplica imediatamente ao clicar
+    if (e.target.id && e.target.id.startsWith('cb-kb-')) {
+      if (typeof applyKeyboardTweaks === 'function') {
+        applyKeyboardTweaks();
+      }
+    } else {
+      if (typeof applyPrecisionTweaks === 'function') {
+        applyPrecisionTweaks();
+      }
+    }
+  });
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+  function initParticles() {
+    if (typeof particlesJS !== 'undefined') {
+      const color = localStorage.getItem('particlesColor') || "#ffffff";
+      
+      // se já existir, remover o canvas antigo pra não sobrepor
+      const container = document.getElementById('particles-js');
+      if (container) container.innerHTML = '';
+      
+      particlesJS("particles-js", {
+        "particles": {
+          "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+          "color": { "value": color },
+          "shape": { "type": "circle" },
+          "opacity": { "value": 0.5, "random": false },
+          "size": { "value": 3, "random": true },
+          "line_linked": { "enable": true, "distance": 150, "color": color, "opacity": 0.2, "width": 1 },
+          "move": { "enable": true, "speed": 1.5, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+        },
+        "interactivity": {
+          "detect_on": "canvas",
+          "events": {
+            "onhover": { "enable": false, "mode": "repulse" },
+            "onclick": { "enable": false, "mode": "push" },
+            "resize": true
+          }
+        },
+        "retina_detect": true
+      });
+    }
+  }
+  
+  initParticles();
+</script>
+<script>
+function saveMiraProfile() {
+  const header = document.querySelector('#tab-mira .display-profiles-header');
+  header.innerHTML = `
+    <div class="display-section-title" style="margin-bottom: 0;">NOVO PERFIL DE MIRA</div>
+    <div style="display: flex; gap: 8px;">
+      <input type="text" id="new-mira-profile-name" placeholder="Ex: CS2 Ponto..." style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; padding: 4px 10px; font-size: 13px; outline: none; width: 120px;">
+      <button class="display-save-btn" style="background: rgba(255,255,255,0.1); color: #ffffff; border-color: rgba(255,255,255,0.3);" onclick="confirmSaveMiraProfile()">Salvar</button>
+      <button class="display-save-btn" onclick="cancelSaveMiraProfile()">X</button>
+    </div>
+  `;
+  document.getElementById('new-mira-profile-name').focus();
+}
+function confirmSaveMiraProfile() {
+  const name = document.getElementById('new-mira-profile-name').value;
+  if (!name || name.trim() === "") {
+      cancelSaveMiraProfile();
+      return;
+  }
+  const cfgStr = localStorage.getItem('mira_config');
+  if (cfgStr) {
+    let profiles = JSON.parse(localStorage.getItem('miraProfiles') || '[]');
+    let cfg = JSON.parse(cfgStr);
+    profiles.push({ name: name.trim(), config: cfg });
+    localStorage.setItem('miraProfiles', JSON.stringify(profiles));
+  }
+  cancelSaveMiraProfile();
+  renderMiraProfiles();
+}
+function cancelSaveMiraProfile() {
+  const header = document.querySelector('#tab-mira .display-profiles-header');
+  header.innerHTML = `
+      <div class="display-section-title" style="margin-bottom: 0;">PERFIS DE MIRA</div>
+      <button class="display-save-btn" onclick="saveMiraProfile()"><svg style="width:14px;height:14px;fill:#fff;" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Salvar perfil atual</button>
+  `;
+}
+function deleteMiraProfile(index) {
+  let profiles = JSON.parse(localStorage.getItem('miraProfiles') || '[]');
+  profiles.splice(index, 1);
+  localStorage.setItem('miraProfiles', JSON.stringify(profiles));
+  renderMiraProfiles();
+}
+function applyMiraProfile(index) {
+  try {
+    let profiles = JSON.parse(localStorage.getItem('miraProfiles') || '[]');
+    if (profiles[index]) {
+      const cfg = profiles[index].config;
+      localStorage.setItem('mira_config', JSON.stringify(cfg));
+      // Apply UI updates
+      if(cfg.scaleX !== undefined) { document.getElementById('mira-scaleX').value = cfg.scaleX; document.getElementById('miraScaleXVal').innerText = cfg.scaleX + '%'; }
+      if(cfg.scaleY !== undefined) { document.getElementById('mira-scaleY').value = cfg.scaleY; document.getElementById('miraScaleYVal').innerText = cfg.scaleY + '%'; }
+      if(cfg.posX !== undefined) { document.getElementById('mira-posX').value = cfg.posX; document.getElementById('miraPosXVal').innerText = cfg.posX + 'px'; }
+      if(cfg.posY !== undefined) { document.getElementById('mira-posY').value = cfg.posY; document.getElementById('miraPosYVal').innerText = cfg.posY + 'px'; }
+      if(cfg.opacity !== undefined) { document.getElementById('mira-opacity').value = cfg.opacity; document.getElementById('miraOpacityVal').innerText = cfg.opacity + '%'; }
+      if(cfg.color !== undefined) { document.getElementById('mira-color').value = cfg.color; document.getElementById('miraColorVal').innerText = cfg.color; document.getElementById('mira-color-custom-btn').style.background = cfg.color; }
+      if(cfg.hasOutline !== undefined) document.getElementById('mira-has-outline').checked = cfg.hasOutline;
+      if(cfg.outlineThickness !== undefined) { document.getElementById('mira-outline-thickness').value = cfg.outlineThickness; document.getElementById('miraOutlineThickVal').innerText = cfg.outlineThickness + 'px'; }
+      if(cfg.outlineColor !== undefined) { document.getElementById('mira-outline-color').value = cfg.outlineColor; document.getElementById('miraOutlineColorVal').innerText = cfg.outlineColor; document.getElementById('mira-outline-custom-btn').style.background = cfg.outlineColor; }
+      if(cfg.shape !== undefined) { window.currentMiraShape = cfg.shape; }
+      
+      // Force active state so it always shows the profile
+      const cb = document.getElementById('cb-crosshair-active');
+      if (!cb.checked) {
+        cb.checked = true;
+        toggleMira(); // This will also call sendMiraUpdate
+      } else {
+        sendMiraUpdate();
+      }
+    }
+  } catch(e) {
+    alert("Erro ao aplicar perfil: " + e.message);
+  }
+}
+function renderMiraProfiles() {
+  const container = document.getElementById('saved-mira-profiles-container');
+  if(!container) return;
+  let profiles = JSON.parse(localStorage.getItem('miraProfiles') || '[]');
+  if (profiles.length === 0) {
+    container.innerHTML = 'Nenhum perfil salvo. Ajuste a mira e clique em "Salvar perfil atual".';
+    container.style = 'font-size: 13px; color: var(--text-muted);';
+    return;
+  }
+  container.style = 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;';
+  container.innerHTML = '';
+  profiles.forEach((p, index) => {
+    container.innerHTML += `
+      <div style="background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 13px; font-weight: 600; color: #fff; cursor: pointer; flex: 1;" title="Clique para aplicar" onclick="applyMiraProfile(${index})">${p.name}</span>
+        <button onclick="deleteMiraProfile(${index})" title="Excluir perfil" style="background:transparent; border:none; color: #ff4444; cursor: pointer; font-size: 18px; line-height: 1; padding: 0 5px;">&times;</button>
+      </div>
+    `;
+  });
+}
+renderMiraProfiles();
+
+  let miraBind = null;
+  let isBindingMira = false;
+  
+  function startBindMira(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    isBindingMira = true;
+    document.getElementById('btn-bind-mira').innerText = "Pressione tecla/mouse...";
+    document.getElementById('btn-bind-mira').style.borderColor = "var(--primary-color)";
+  }
+
+  function finishBindMira(label) {
+    document.getElementById('btn-bind-mira').style.borderColor = "rgba(255,255,255,0.1)";
+    document.getElementById('btn-bind-mira').innerText = label ? "Atalho: " + label : "Atalho: Nenhum";
+    // Usa um timeout pequeno para evitar que o clique do mouse no ato do bind já triggue a mira
+    setTimeout(() => { isBindingMira = false; }, 50);
+
+    try {
+      if (miraBind) localStorage.setItem('mira_bind', JSON.stringify(miraBind));
+      else localStorage.removeItem('mira_bind');
+    } catch(e){}
+
+    // Manda para o back-end (main.js) registrar globalmente (teclado ou mouse)
+    if (miraBind && miraBind.type === 'key') {
+      try {
+        require('electron').ipcRenderer.send('set-mira-bind', { type: 'key', keyStr: miraBind.keyRaw });
+      } catch(e){}
+    } else if (miraBind && miraBind.type === 'mouse') {
+      try {
+        require('electron').ipcRenderer.send('set-mira-bind', { type: 'mouse', button: miraBind.button });
+      } catch(e){}
+    } else {
+      try {
+        require('electron').ipcRenderer.send('set-mira-bind', null);
+      } catch(e){}
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (isBindingMira) {
+      e.preventDefault();
+      if (e.key === "Escape") {
+        miraBind = null;
+        finishBindMira(null);
+      } else {
+        let rawKey = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+        miraBind = { type: 'key', code: e.code, keyRaw: rawKey };
+        finishBindMira(rawKey);
+      }
+      return;
+    }
+
+    if (miraBind && miraBind.type === 'key' && e.code === miraBind.code) {
+      const cb = document.getElementById('cb-crosshair-active');
+      cb.checked = !cb.checked;
+      toggleMira();
+    }
+  });
+
+  document.addEventListener('mousedown', (e) => {
+    if (isBindingMira) {
+      e.preventDefault();
+      miraBind = { type: 'mouse', button: e.button };
+      
+      let label = "MOUSE " + e.button;
+      if (e.button === 0) label = "CLIQUE ESQUERDO";
+      else if (e.button === 1) label = "CLIQUE MEIO";
+      else if (e.button === 2) label = "CLIQUE DIREITO";
+      
+      finishBindMira(label);
+      return;
+    }
+
+    if (miraBind && miraBind.type === 'mouse' && e.button === miraBind.button) {
+      const cb = document.getElementById('cb-crosshair-active');
+      cb.checked = !cb.checked;
+      toggleMira();
+    }
+  });
+
+  // Escuta o atalho global de teclado vindo do main.js
+  try {
+    const { ipcRenderer } = require('electron');
+    ipcRenderer.on('trigger-mira-bind', () => {
+      const cb = document.getElementById('cb-crosshair-active');
+      cb.checked = !cb.checked;
+      toggleMira();
+    });
+
+    ipcRenderer.on('bind-status', (event, status) => {
+      if (status.keyStr && !status.success) {
+        alert("Ops! O sistema nao conseguiu registrar a tecla [" + status.keyStr + "] como atalho global.\nIsso acontece com teclas invalidas ou ja usadas por outro app.\nPor favor, escolha outra tecla (ex: F4, Insert, X).");
+        miraBind = null;
+        document.getElementById('btn-bind-mira').innerText = "Atalho: Nenhum";
+      }
+    });
+  } catch(e) {}
+
+  // ================= CARREGAR MIRA AUTOMATICAMENTE =================
+  window.addEventListener('DOMContentLoaded', () => {
+    try {
+      // Carrega Bind
+      const savedBindStr = localStorage.getItem('mira_bind');
+      if (savedBindStr) {
+        miraBind = JSON.parse(savedBindStr);
+        let label = "Nenhum";
+        if (miraBind.type === 'key') {
+          label = miraBind.keyRaw;
+        } else if (miraBind.type === 'mouse') {
+          label = "MOUSE " + miraBind.button;
+          if (miraBind.button === 0) label = "CLIQUE ESQUERDO";
+          else if (miraBind.button === 1) label = "CLIQUE MEIO";
+          else if (miraBind.button === 2) label = "CLIQUE DIREITO";
+        }
+        finishBindMira(label);
+      }
+    } catch(e) {}
+  });
+</script>
+
+
+<script>
+(function () {
+  const CSS = `
+  .cw-section {
+    max-width: 620px; margin: 0 auto 24px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(22,22,22,.7), rgba(10,10,10,.7));
+    border: 1px solid rgba(255,255,255,.14);
+    overflow: hidden;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  .cw-header { display: flex; align-items: flex-start; gap: 14px; padding: 20px 22px; }
+  .cw-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.25);
+    color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .cw-icon svg { width: 19px; height: 19px; }
+  .cw-title { font-size: 15px; font-weight: 700; color: #fff; }
+  .cw-sub { font-size: 12px; color: #8c8c8c; margin-top: 3px; }
+  .cw-divider { display: none; }
+  .cw-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 22px; border-top: none; }
+  .cw-row-title { font-size: 13.5px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+  .cw-row-desc { font-size: 12px; color: #8c8c8c; line-height: 1.4; }
+  .cw-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; cursor: pointer; }
+  .cw-switch input { display: none; }
+  .cw-track { position: absolute; inset: 0; background: #2a2a2a; border-radius: 20px; transition: background .2s ease; }
+  .cw-thumb { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #cfcfcf; transition: transform .2s ease, background .2s ease; }
+  .cw-switch input:checked + .cw-track { background: #565656; }
+  .cw-switch input:checked + .cw-track .cw-thumb { transform: translateX(20px); background: #fff; }
+
+  .cw-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border-radius: 9px;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+    color: #e8ecea; font-size: 12.5px; font-weight: 700; letter-spacing: .3px;
+    cursor: pointer; transition: all .15s ease; flex-shrink: 0;
+  }
+  .cw-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.4); color: #fff; }
+  .cw-btn svg { width: 14px; height: 14px; }
+
+  .cw-key-value {
+    font-family: 'Consolas', monospace;
+    font-size: 13px; letter-spacing: 1px;
+    color: #d8d8d8; background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 8px; padding: 7px 12px;
+    user-select: all;
+  }
+  .cw-key-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .cw-icon-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+    color: #b7b7b7; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all .15s ease;
+  }
+  .cw-icon-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.35); color: #fff; }
+  .cw-icon-btn svg { width: 14px; height: 14px; }
+
+  .cw-select {
+    appearance: none; -webkit-appearance: none;
+    padding: 9px 34px 9px 14px; border-radius: 9px;
+    background: rgba(255,255,255,.05) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23b7b7b7" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>') no-repeat right 10px center;
+    background-size: 14px;
+    border: 1px solid rgba(255,255,255,.15);
+    color: #e8ecea; font-size: 12.5px; font-weight: 700; letter-spacing: .3px;
+    cursor: pointer; flex-shrink: 0; transition: all .15s ease;
+  }
+  .cw-select:hover { border-color: rgba(255,255,255,.35); }
+  .cw-select:focus { outline: none; border-color: rgba(255,255,255,.5); }
+  .cw-select option { background: #161616; color: #e8ecea; }
+  `;
+
+  const ICONES = {
+    sistema: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+    teclado: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/></svg>`,
+    mira: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>`,
+    escudo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>`,
+  };
+
+  function injetarCssUmaVez() {
+    if (document.getElementById('cw-painel-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'cw-painel-styles';
+    style.textContent = CSS;
+    document.head.appendChild(style);
+  }
+
+  window.criarPainel = function (containerSeletor, dados) {
+    injetarCssUmaVez();
+    const container = typeof containerSeletor === 'string'
+      ? document.querySelector(containerSeletor)
+      : containerSeletor;
+
+    const icone = ICONES[dados.icone] || dados.icone || ICONES.sistema;
+
+    const section = document.createElement('div');
+    section.className = 'cw-section';
+    section.innerHTML = `
+      <div class="cw-header">
+        <div class="cw-icon">${icone}</div>
+        <div>
+          <div class="cw-title">${dados.titulo}</div>
+          <div class="cw-sub">${dados.subtitulo || ''}</div>
+        </div>
+      </div>
+      <div class="cw-divider"></div>
+    `;
+
+    (dados.itens || []).forEach((item) => {
+      const tipo = item.tipo || 'toggle';
+      const row = document.createElement('div');
+      row.className = 'cw-row';
+
+      if (tipo === 'toggle') {
+        row.innerHTML = `
+          <div>
+            <div class="cw-row-title">${item.titulo}</div>
+            <div class="cw-row-desc">${item.desc || ''}</div>
+          </div>
+          <label class="cw-switch">
+            <input type="checkbox" id="chk-${item.id}" ${item.ativo ? 'checked' : ''}>
+            <span class="cw-track"><span class="cw-thumb"></span></span>
+          </label>
+        `;
+        const input = row.querySelector('input');
+        if (typeof item.onChange === 'function') {
+          input.addEventListener('change', () => item.onChange(input.checked));
+        }
+      }
+
+      else if (tipo === 'botao') {
+        row.innerHTML = `
+          <div>
+            <div class="cw-row-title">${item.titulo}</div>
+            <div class="cw-row-desc">${item.desc || ''}</div>
+          </div>
+          <button class="cw-btn" id="btn-${item.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            ${item.textoBotao || 'Resetar'}
+          </button>
+        `;
+        const btn = row.querySelector('button');
+        if (typeof item.onClick === 'function') {
+          btn.addEventListener('click', () => item.onClick(btn));
+        }
+      }
+
+      else if (tipo === 'key') {
+        const getValor = () => typeof item.valor === 'function' ? item.valor() : (item.valor || '-');
+        const mascarada = getValor().replace(/[^-]/g, ' ');
+        row.innerHTML = `
+          <div>
+            <div class="cw-row-title">${item.titulo}</div>
+            <div class="cw-row-desc">${item.desc || ''}</div>
+          </div>
+          <div class="cw-key-actions">
+            <span class="cw-key-value" id="val-${item.id}">${mascarada}</span>
+            <button class="cw-icon-btn" id="olho-${item.id}" title="Mostrar/ocultar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="cw-icon-btn" id="copiar-${item.id}" title="Copiar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+            </button>
+          </div>
+        `;
+
+        let visivel = false;
+        const valorEl = row.querySelector(`#val-${item.id}`);
+        row.querySelector(`#olho-${item.id}`).addEventListener('click', () => {
+          visivel = !visivel;
+          valorEl.textContent = visivel ? getValor() : getValor().replace(/[^-]/g, ' ');
+        });
+        row.querySelector(`#copiar-${item.id}`).addEventListener('click', () => {
+          navigator.clipboard.writeText(getValor());
+          if (typeof item.onCopiar === 'function') item.onCopiar();
+        });
+      }
+
+      else if (tipo === 'color') {
+        row.innerHTML = `
+          <div>
+            <div class="cw-row-title">${item.titulo}</div>
+            <div class="cw-row-desc">${item.desc || ''}</div>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;">
+            <input type="color" class="pro-color-picker" id="color-${item.id}" value="${item.valor || '#ffffff'}" title="Clique para escolher a cor">
+          </div>
+        `;
+        row.querySelector(`#color-${item.id}`).addEventListener('change', (e) => {
+          if (typeof item.onChange === 'function') {
+            item.onChange(e.target.value);
+          }
+        });
+      }
+
+      else if (tipo === 'select') {
+        const opcoes = (item.opcoes || [])
+          .map((op) => `<option value="${op.valor}" ${op.valor === item.valorSelecionado ? 'selected' : ''}>${op.rotulo}</option>`)
+          .join('');
+        row.innerHTML = `
+          <div>
+            <div class="cw-row-title">${item.titulo}</div>
+            <div class="cw-row-desc">${item.desc || ''}</div>
+          </div>
+          <select class="cw-select" id="sel-${item.id}">${opcoes}</select>
+        `;
+        const select = row.querySelector('select');
+        if (typeof item.onChange === 'function') {
+          select.addEventListener('change', () => item.onChange(select.value));
+        }
+      }
+
+      section.appendChild(row);
+    });
+
+    container.appendChild(section);
+    return section;
+  };
+})();
+
+criarPainel('#paineis-config', {
+  icone: 'sistema',
+  titulo: 'Sistema',
+  subtitulo: 'Reset de configurações e gerenciamento da sua licença.',
+  itens: [
+    {
+      id: 'autoStart', tipo: 'toggle', titulo: 'Iniciar com o Windows',
+      desc: 'Abre o aplicativo automaticamente em segundo plano ao ligar o computador.',
+      ativo: localStorage.getItem('auto_start_enabled') === 'true',
+      onChange: (ligado) => {
+        localStorage.setItem('auto_start_enabled', ligado);
+        if (typeof require !== 'undefined') {
+          require('electron').ipcRenderer.send('set-autostart', ligado);
+        }
+      }
+    },
+    {
+      id: 'minTray', tipo: 'toggle', titulo: 'Fechar para a Bandeja do Sistema',
+      desc: 'Ao fechar a janela, o aplicativo continua rodando perto do relógio.',
+      ativo: localStorage.getItem('min_tray_enabled') === 'true',
+      onChange: (ligado) => {
+        localStorage.setItem('min_tray_enabled', ligado);
+        if (typeof require !== 'undefined') {
+          require('electron').ipcRenderer.send('set-min-tray', ligado);
+        }
+      }
+    },
+    {
+      id: 'resetarPadrao', tipo: 'botao', titulo: 'Resetar configuração padrão do Windows',
+      desc: 'Desfaz todos os ajustes de registro aplicados e volta ao padrão de fábrica do Windows.',
+      textoBotao: 'Resetar',
+      onClick: () => {
+        if (typeof require !== 'undefined') {
+          const { ipcRenderer } = require('electron');
+          ipcRenderer.send('revert-precision-tweaks');
+          ipcRenderer.send('revert-keyboard-tweaks');
+        }
+      },
+    },
+    {
+      id: 'notificacoes', titulo: 'Notificações', desc: 'Mostrar avisos na tela ao aplicar ajustes.', 
+      ativo: sessionStorage.getItem('enable_notifications') !== 'false',
+      onChange: (ligado) => {
+        sessionStorage.setItem('enable_notifications', ligado);
+        if(typeof showToast === 'function') showToast('Notificações', ligado ? 'Ativadas' : 'Desativadas', ligado, 3500, true);
+      },
+    },
+    {
+      id: 'particlesColor', tipo: 'color', titulo: 'Cor do Tema (RGB)',
+      desc: 'Escolha a cor principal do aplicativo inteiro.',
+      valor: localStorage.getItem('particlesColor') || '#ffffff',
+      onChange: (cor) => {
+        localStorage.setItem('particlesColor', cor);
+        document.documentElement.style.setProperty('--theme-color', cor);
+        if (typeof initParticles === 'function') initParticles();
+      }
+    }
+  ],
+});
+
+// Sincronizar estados iniciais com o main process
+window.addEventListener('DOMContentLoaded', () => {
+  if (typeof require !== 'undefined') {
+    const ipc = require('electron').ipcRenderer;
+    const autoStartEnabled = localStorage.getItem('auto_start_enabled') === 'true';
+    const minTrayEnabled = localStorage.getItem('min_tray_enabled') === 'true';
+    ipc.send('set-autostart', autoStartEnabled);
+    ipc.send('set-min-tray', minTrayEnabled);
+  }
+});
+</script>
+<script>
+const GAME_PROFILE_STORAGE_KEY = 'gameProfiles';
+const GAME_PROFILE_MOUSE_IDS = [
+  'cb-mouse-precision',
+  'cb-performance-boost',
+  'cb-k1ng-tracking',
+  'cb-k1ng-sensi',
+  'cb-k1ng-flick',
+  'cb-k1ng-0.5ms',
+  'cb-k1ng-registros-mouse',
+  'cb-k1ng-islc',
+  'cb-k1ng-sensi-x-y',
+  'cb-k1ng-flags',
+  'cb-k1ng-accessibility',
+  'cb-k1ng-boost-fivem'
+];
+const GAME_PROFILE_KEYBOARD_FIELDS = {
+  'cb-kb-precision': 'precision',
+  'cb-kb-filter': 'filterKeys',
+  'cb-kb-delay': 'delay',
+  'cb-kb-rate': 'rate',
+  'cb-kb-input': 'input',
+  'cb-kb-registros': 'registros',
+  'cb-kb-usb': 'usb',
+  'cb-kb-bounce': 'bounce'
+};
+
+function readGameProfiles() {
+  const saved = localStorage.getItem(GAME_PROFILE_STORAGE_KEY);
+  if (!saved) return [];
+  const profiles = JSON.parse(saved);
+  if (!Array.isArray(profiles)) throw new Error('Os perfis salvos estão em um formato inválido.');
+  return profiles;
+}
+
+function showGameProfileError(message) {
+  console.error(message);
+  if (typeof showToast === 'function') showToast('Erro nos perfis', message, false, 5000, true);
+}
+
+function renderGameProfiles() {
+  const container = document.getElementById('game-profiles-list');
+  if (!container) return;
+  container.replaceChildren();
+
+  try {
+    const profiles = readGameProfiles();
+    if (profiles.length === 0) {
+      const emptyMessage = document.createElement('p');
+      emptyMessage.textContent = 'Nenhum perfil salvo. Configure suas opções e salve o primeiro perfil.';
+      emptyMessage.style.cssText = 'color: var(--text-muted); font-size: 13px; margin: 0;';
+      container.appendChild(emptyMessage);
+      return;
+    }
+
+    profiles.forEach((profile, index) => {
+      if (!profile || typeof profile.name !== 'string') {
+        throw new Error('Um dos perfis salvos está inválido.');
+      }
+      const card = document.createElement('div');
+      card.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 15px; display: flex; flex-direction: column; gap: 12px;';
+
+      const title = document.createElement('div');
+      title.textContent = profile.name;
+      title.style.cssText = 'font-size: 14px; font-weight: 700; color: #fff; overflow-wrap: anywhere;';
+
+      const details = document.createElement('div');
+      details.textContent = 'Mouse, teclado e sensibilidade';
+      details.style.cssText = 'font-size: 11px; color: var(--text-muted);';
+
+      const actions = document.createElement('div');
+      actions.style.cssText = 'display: flex; gap: 8px;';
+
+      const applyButton = document.createElement('button');
+      applyButton.type = 'button';
+      applyButton.className = 'btn-primary';
+      applyButton.textContent = 'Aplicar perfil';
+      applyButton.style.cssText = 'padding: 9px 12px; font-size: 11px; flex: 1;';
+      applyButton.addEventListener('click', () => applyGameProfile(index));
+
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.className = 'btn-secondary';
+      deleteButton.textContent = 'Excluir';
+      deleteButton.style.cssText = 'padding: 9px 12px; font-size: 11px;';
+      deleteButton.addEventListener('click', () => deleteGameProfile(index));
+
+      actions.append(applyButton, deleteButton);
+      card.append(title, details, actions);
+      container.appendChild(card);
+    });
+  } catch (error) {
+    const errorMessage = document.createElement('p');
+    errorMessage.textContent = 'Não foi possível carregar os perfis salvos.';
+    errorMessage.style.cssText = 'color: #ff6a6a; font-size: 13px; margin: 0;';
+    container.appendChild(errorMessage);
+    showGameProfileError(error.message);
+  }
+}
+
+function saveGameProfile() {
+  const nameInput = document.getElementById('game-profile-name');
+  const name = nameInput.value.trim();
+  if (!name || name.length > 40) {
+    showToast('Informe o nome do jogo', 'Digite um nome antes de salvar o perfil.', false);
+    nameInput.focus();
+    return;
+  }
+
+  const mouse = {};
+  GAME_PROFILE_MOUSE_IDS.forEach(id => {
+    mouse[id] = document.getElementById(id).checked;
+  });
+
+  const keyboard = {};
+  Object.keys(GAME_PROFILE_KEYBOARD_FIELDS).forEach(id => {
+    keyboard[id] = document.getElementById(id).checked;
+  });
+
+  const profile = {
+    name,
+    mouse,
+    keyboard,
+    sensitivity: Number(document.getElementById('sensi-slider').value),
+    disableAcceleration: document.getElementById('cb-accel').checked
+  };
+
+  try {
+    const profiles = readGameProfiles();
+    const existingIndex = profiles.findIndex(item =>
+      item && typeof item.name === 'string' && item.name.trim().toLowerCase() === name.toLowerCase()
+    );
+    if (existingIndex >= 0) profiles[existingIndex] = profile;
+    else profiles.push(profile);
+    localStorage.setItem(GAME_PROFILE_STORAGE_KEY, JSON.stringify(profiles));
+    renderGameProfiles();
+    showToast(existingIndex >= 0 ? 'Perfil atualizado' : 'Perfil salvo', name, true);
+  } catch (error) {
+    showGameProfileError(`Não foi possível salvar o perfil: ${error.message}`);
+  }
+}
+
+function applyGameProfile(index) {
+  try {
+    const profile = readGameProfiles()[index];
+    if (!profile || typeof profile.name !== 'string') throw new Error('O perfil selecionado não existe ou está inválido.');
+    const sensitivity = Number(profile.sensitivity);
+    if (!Number.isInteger(sensitivity) || sensitivity < 1 || sensitivity > 20) {
+      throw new Error('O valor de sensibilidade salvo é inválido.');
+    }
+    if (!profile.mouse || typeof profile.mouse !== 'object' || !profile.keyboard || typeof profile.keyboard !== 'object' || typeof profile.disableAcceleration !== 'boolean') {
+      throw new Error('As configurações salvas neste perfil estão inválidas.');
+    }
+    if (!confirm(`Aplicar o perfil "${profile.name}"? Isso enviará os ajustes selecionados para o Windows.`)) return;
+
+    GAME_PROFILE_MOUSE_IDS.forEach(id => {
+      document.getElementById(id).checked = profile.mouse && profile.mouse[id] === true;
+    });
+
+    Object.keys(GAME_PROFILE_KEYBOARD_FIELDS).forEach(id => {
+      document.getElementById(id).checked = profile.keyboard && profile.keyboard[id] === true;
+    });
+
+    document.getElementById('sensi-slider').value = sensitivity;
+    document.getElementById('sensi-val-display').textContent = String(sensitivity);
+    document.getElementById('cb-accel').checked = profile.disableAcceleration === true;
+    if (typeof updateSliderFill === 'function') updateSliderFill();
+    if (typeof updateProgress === 'function') updateProgress();
+
+    const mouseTweaks = {};
+    GAME_PROFILE_MOUSE_IDS.forEach(id => {
+      mouseTweaks[id.replace(/^cb-/, '')] = profile.mouse && profile.mouse[id] === true;
+    });
+    applyPrecisionTweaks(mouseTweaks);
+
+    const keyboardTweaks = {};
+    Object.entries(GAME_PROFILE_KEYBOARD_FIELDS).forEach(([id, field]) => {
+      keyboardTweaks[field] = profile.keyboard && profile.keyboard[id] === true;
+    });
+    applyKeyboardTweaks(keyboardTweaks);
+    applySensi();
+    showToast('Perfil carregado', `Ajustes de ${profile.name} enviados para aplicação.`, true);
+  } catch (error) {
+    showGameProfileError(`Não foi possível aplicar o perfil: ${error.message}`);
+  }
+}
+
+function deleteGameProfile(index) {
+  try {
+    const profiles = readGameProfiles();
+    const profile = profiles[index];
+    if (!profile) throw new Error('O perfil selecionado não existe.');
+    if (!confirm(`Excluir o perfil "${profile.name}"?`)) return;
+    profiles.splice(index, 1);
+    localStorage.setItem(GAME_PROFILE_STORAGE_KEY, JSON.stringify(profiles));
+    renderGameProfiles();
+    showToast('Perfil excluído', profile.name, true);
+  } catch (error) {
+    showGameProfileError(`Não foi possível excluir o perfil: ${error.message}`);
+  }
+}
+
+renderGameProfiles();
+</script>
+</body>
+</html>
