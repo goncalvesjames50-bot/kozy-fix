@@ -411,6 +411,129 @@
   }
   .historyMeta{ color:var(--ink-muted); flex:1; }
   .historyScore{ font-weight:700; color:var(--ink-primary); font-variant-numeric: tabular-nums; }
+
+  #bgFx{
+    background-image:
+      linear-gradient(rgba(196,210,231,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(196,210,231,.035) 1px, transparent 1px);
+    opacity:.45;
+  }
+  #menu{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:19px 24px;
+    width:min(840px,94vw);
+    max-height:calc(100vh - 36px);
+    padding:28px 32px 24px;
+    border-color:rgba(195,210,233,.13);
+    background:
+      radial-gradient(ellipse at 8% 0%,rgba(139,160,194,.12),transparent 36%),
+      linear-gradient(155deg,#17191e,#0e0f12 72%);
+    box-shadow:0 30px 90px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  #menu .brand,#modeField,#soundField,#historyField,#startBtn,#menu .hint{grid-column:1/-1;}
+  #menu .brand{
+    margin:0;
+    padding-bottom:17px;
+    border-bottom:1px solid rgba(255,255,255,.075);
+  }
+  #menu .brand-mark{
+    width:42px;height:42px;border-color:rgba(205,219,241,.18);border-radius:12px;
+    background:linear-gradient(145deg,#303746,#171a21);
+    box-shadow:0 8px 22px rgba(0,0,0,.35),inset 0 1px rgba(255,255,255,.12);
+  }
+  #menu .brand h1{font-size:21px;letter-spacing:-.035em;}
+  #menu .brand .tagline{color:#a1a7b4;}
+  #menu .field{min-width:0;margin:0;}
+  #menu .field>label{margin-bottom:9px;color:#aab0bc;font-size:10px;letter-spacing:.13em;}
+  #modeField{padding-top:1px;}
+  #menu .modeGrid{gap:12px;}
+  #menu .modeCard{
+    min-height:104px;padding:15px 12px 13px;border-color:rgba(255,255,255,.08);
+    background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+  }
+  #menu .modeCard:hover{
+    border-color:rgba(207,220,241,.28);background:rgba(255,255,255,.06);transform:translateY(-2px);
+  }
+  #menu .modeCard.active{
+    border-color:rgba(202,216,238,.48);
+    background:linear-gradient(145deg,rgba(155,176,207,.16),rgba(255,255,255,.035));
+    box-shadow:inset 0 0 0 1px rgba(202,216,238,.1),0 8px 22px rgba(0,0,0,.2);
+  }
+  #menu .modeCard.active svg{filter:drop-shadow(0 0 7px rgba(210,224,245,.35));}
+  #menu .modeCard .name{font-size:13px;}
+  #menu .modeCard .desc{color:#959ba7;font-size:10px;}
+  #menu .seg{gap:8px;}
+  #menu .seg button{
+    min-height:40px;border-radius:9px;border-color:rgba(255,255,255,.075);
+    background:rgba(255,255,255,.025);color:#c7cbd3;
+  }
+  #menu .seg button:hover{background:rgba(255,255,255,.07);}
+  #menu .seg button.active{
+    border-color:rgba(203,216,237,.32);
+    background:linear-gradient(145deg,rgba(153,173,205,.2),rgba(255,255,255,.055));
+    color:#fff;box-shadow:inset 0 1px rgba(255,255,255,.07);
+  }
+  #soundField{
+    padding:11px 13px;border:1px solid rgba(255,255,255,.07);
+    border-radius:10px;background:rgba(255,255,255,.025);
+  }
+  #soundField .toggleLabel{color:#c2c7d1;font-size:12px;}
+  #soundField .switch{width:38px;height:21px;}
+  #soundField .switch .knob{width:15px;height:15px;}
+  #soundField .switch.on .knob{left:19px;}
+  #startBtn{
+    min-height:48px;margin:-3px 0 0;border-color:rgba(224,232,245,.28);
+    background:linear-gradient(135deg,#e2e7ef,#bac5d7);color:#13161c;
+    box-shadow:0 10px 25px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.7);
+    letter-spacing:.08em;
+  }
+  #startBtn:hover{
+    background:linear-gradient(135deg,#f1f4f8,#cbd4e2);
+    box-shadow:0 12px 30px rgba(0,0,0,.35),0 0 28px rgba(174,195,225,.12);
+  }
+  #menu .hint{margin:-10px 0 0;color:#858b97;font-size:10.5px;}
+  #menu .hint kbd{border-color:rgba(255,255,255,.13);background:rgba(255,255,255,.07);color:#d5d9e1;}
+  #historyField{
+    padding:12px 14px;border:1px solid rgba(255,255,255,.07);
+    border-radius:10px;background:rgba(255,255,255,.025);
+  }
+  #historyField>label{margin-bottom:6px;}
+  #gameWrap{
+    width:min(96vw,1280px);height:min(82vh,780px);border-color:rgba(195,210,233,.15);
+    box-shadow:0 28px 90px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  #canvas{background:#0d1015;}
+  #canvas.freeAim{cursor:crosshair;}
+  .hud-chip{
+    border-color:rgba(207,220,241,.13);background:rgba(10,12,17,.78);
+    box-shadow:0 8px 24px rgba(0,0,0,.22);
+  }
+  #timerBarFill{background:linear-gradient(90deg,#8698b4,#e5ebf4);}
+  #startBtn:focus-visible,.modeCard:focus-visible,.seg button:focus-visible,
+  .switch:focus-visible,#soundToggle:focus-visible,.resultBtns button:focus-visible{
+    outline:2px solid rgba(200,216,240,.8);outline-offset:3px;
+  }
+  @media (max-height:650px){
+    #menu{gap:13px 20px;padding:19px 25px 16px;}
+    #menu .brand{padding-bottom:11px;}
+    #menu .brand-mark{width:36px;height:36px;}
+    #menu .modeCard{min-height:86px;padding:10px;}
+    #menu .field>label{margin-bottom:6px;}
+  }
+  @media (max-width:620px){
+    #menu{gap:14px;padding:20px 18px;}
+    #menu .modeGrid{gap:7px;}
+    #menu .modeCard{min-height:95px;padding:10px 6px;}
+    #menu .modeCard .name{font-size:12px;}
+    #menu .modeCard .desc{font-size:9px;}
+    #menu .seg button{padding:9px 8px;font-size:12px;}
+    #gameWrap{width:98vw;height:86vh;border-radius:12px;}
+    #hud{padding:10px;}
+    .hud-chip{padding:7px 9px;font-size:10px;}
+    .hud-chip b{font-size:14px;}
+    #timerBarWrap{width:72px;}
+  }
 </style>
 </head>
 <body>
@@ -434,20 +557,20 @@
       </div>
     </div>
 
-    <div class="field">
+    <div class="field" id="modeField">
       <label>Modo de treino</label>
       <div class="modeGrid" id="modeSeg">
-        <div class="modeCard active" data-val="flick">
+        <div class="modeCard active" data-val="flick" role="button" aria-pressed="true" tabindex="0">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 3v4M12 17v4M3 12h4M17 12h4" stroke="var(--ink-secondary)" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="4" stroke="var(--ink-secondary)" stroke-width="2"/></svg>
           <div class="name">Flick</div>
           <div class="desc">Alvos rápidos que somem</div>
         </div>
-        <div class="modeCard" data-val="tracking">
+        <div class="modeCard" data-val="tracking" role="button" aria-pressed="false" tabindex="0">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M3 15c3-8 6 8 9 0s6-8 9 0" stroke="var(--ink-secondary)" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
           <div class="name">Tracking</div>
           <div class="desc">Acompanhe o alvo em movimento</div>
         </div>
-        <div class="modeCard" data-val="misto">
+        <div class="modeCard" data-val="misto" role="button" aria-pressed="false" tabindex="0">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 7h11l-3-3M20 17H9l3 3" stroke="var(--ink-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <div class="name">Misto</div>
           <div class="desc">Alterna entre os dois</div>
@@ -455,7 +578,7 @@
       </div>
     </div>
 
-    <div class="field">
+    <div class="field" id="difficultyField">
       <label>Dificuldade</label>
       <div class="seg" id="diffSeg">
         <button data-val="easy">Fácil</button>
@@ -464,7 +587,7 @@
       </div>
     </div>
 
-    <div class="field">
+    <div class="field" id="durationField">
       <label>Duração</label>
       <div class="seg" id="durSeg">
         <button data-val="30">30s</button>
@@ -473,10 +596,10 @@
       </div>
     </div>
 
-    <div class="field" style="margin-bottom:16px;">
+    <div class="field" id="soundField">
       <div class="toggleRow">
         <span class="toggleLabel">Efeitos sonoros</span>
-        <div class="switch on" id="soundSwitch"><div class="knob"></div></div>
+        <div class="switch on" id="soundSwitch" role="switch" aria-label="Efeitos sonoros" aria-checked="true" tabindex="0"><div class="knob"></div></div>
       </div>
     </div>
 
@@ -486,7 +609,7 @@
     </div>
 
     <button id="startBtn">Iniciar treino</button>
-    <p class="hint">O ponteiro do mouse será travado na área do jogo. Pressione <kbd>Esc</kbd> a qualquer momento para pausar.</p>
+    <p class="hint">Mova o rato na área do jogo. Prima <kbd>Esc</kbd> para pausar e clique para continuar.</p>
   </div>
 
   <!-- GAME -->
@@ -632,25 +755,42 @@
   function setSoundIcon(){
     soundIconOn.style.display = cfg.sound ? 'block' : 'none';
     soundIconOff.style.display = cfg.sound ? 'none' : 'block';
+    const soundSwitch = document.getElementById('soundSwitch');
+    soundSwitch.classList.toggle('on', cfg.sound);
+    soundSwitch.setAttribute('aria-checked', String(cfg.sound));
   }
-  document.getElementById('soundSwitch').addEventListener('click', function(){
+  function toggleSound(){
     cfg.sound = !cfg.sound;
-    this.classList.toggle('on', cfg.sound);
     setSoundIcon();
+  }
+  const soundSwitch = document.getElementById('soundSwitch');
+  soundSwitch.addEventListener('click', toggleSound);
+  soundSwitch.addEventListener('keydown', event=>{
+    if(event.key === ' ' || event.key === 'Enter'){
+      event.preventDefault();
+      toggleSound();
+    }
   });
-  soundToggleBtn.addEventListener('click', ()=>{
-    cfg.sound = !cfg.sound;
-    document.getElementById('soundSwitch').classList.toggle('on', cfg.sound);
-    setSoundIcon();
-  });
+  soundToggleBtn.addEventListener('click', toggleSound);
 
   // ================= Menu wiring =================
   const modeSeg = document.getElementById('modeSeg');
+  function selectMode(card){
+    modeSeg.querySelectorAll('.modeCard').forEach(c=>{
+      c.classList.remove('active');
+      c.setAttribute('aria-pressed', 'false');
+    });
+    card.classList.add('active');
+    card.setAttribute('aria-pressed', 'true');
+    cfg.mode = card.dataset.val;
+  }
   modeSeg.querySelectorAll('.modeCard').forEach(card=>{
-    card.addEventListener('click', ()=>{
-      modeSeg.querySelectorAll('.modeCard').forEach(c=>c.classList.remove('active'));
-      card.classList.add('active');
-      cfg.mode = card.dataset.val;
+    card.addEventListener('click', ()=>selectMode(card));
+    card.addEventListener('keydown', event=>{
+      if(event.key === ' ' || event.key === 'Enter'){
+        event.preventDefault();
+        selectMode(card);
+      }
     });
   });
   function wireSeg(segId, key, transform){
@@ -687,36 +827,88 @@
   let shake = 0; // decaying screen-shake magnitude
 
   canvas.addEventListener('click', ()=>{
-    if(document.pointerLockElement !== canvas){
-      canvas.requestPointerLock();
+    if(document.pointerLockElement !== canvas && !usesPointerFallback){
+      requestGamePointerLock();
     }
   });
+  overlay.addEventListener('click', ()=>{
+    if(session.state !== 'paused') return;
+    if(usesPointerFallback){
+      hidePauseOverlay();
+      resumeSession();
+    } else {
+      requestGamePointerLock();
+    }
+  });
+
+  let usesPointerFallback = false;
+  function enablePointerFallback(){
+    usesPointerFallback = true;
+    canvas.classList.add('freeAim');
+    if(session.state === 'paused'){
+      hidePauseOverlay();
+      resumeSession();
+    }
+  }
+  function requestGamePointerLock(){
+    if(typeof canvas.requestPointerLock !== 'function'){
+      enablePointerFallback();
+      return;
+    }
+    const request = canvas.requestPointerLock();
+    if(request && typeof request.catch === 'function'){
+      request.catch(enablePointerFallback);
+    }
+  }
 
   document.addEventListener('pointerlockchange', ()=>{
     isLocked = (document.pointerLockElement === canvas);
     if(isLocked){
-      hidePauseOverlay();
-      if(session.state === 'paused') resumeSession();
+      if(session.state === 'paused'){
+        hidePauseOverlay();
+        resumeSession();
+      } else if(session.state !== 'countdown'){
+        hidePauseOverlay();
+      }
     } else {
       if(session.state === 'playing'){
+        enablePointerFallback();
         pauseSession();
       }
     }
   });
+  document.addEventListener('pointerlockerror', enablePointerFallback);
 
   document.addEventListener('mousemove', (e)=>{
-    if(!isLocked) return;
-    crosshair.x += e.movementX * cfg.sensitivity;
-    crosshair.y += e.movementY * cfg.sensitivity;
+    if(isLocked){
+      crosshair.x += e.movementX * cfg.sensitivity;
+      crosshair.y += e.movementY * cfg.sensitivity;
+    } else if(usesPointerFallback && session.state === 'playing'){
+      const rect = canvas.getBoundingClientRect();
+      crosshair.x = ((e.clientX - rect.left) / rect.width) * LW;
+      crosshair.y = ((e.clientY - rect.top) / rect.height) * LH;
+    } else {
+      return;
+    }
     crosshair.x = Math.max(0, Math.min(LW, crosshair.x));
     crosshair.y = Math.max(0, Math.min(LH, crosshair.y));
   });
 
   document.addEventListener('mousedown', (e)=>{
     if(e.button !== 0) return;
-    if(!isLocked) return; // the click that establishes lock doesn't count as a shot
+    if(!isLocked && !usesPointerFallback) return;
     if(session.state !== 'playing') return;
     registerShot();
+  });
+  document.addEventListener('keydown', event=>{
+    if(event.key === 'Escape' && session.state === 'playing'){
+      event.preventDefault();
+      if(document.pointerLockElement === canvas){
+        document.exitPointerLock();
+      } else {
+        pauseSession();
+      }
+    }
   });
 
   // ================= Session / game state =================
@@ -761,9 +953,15 @@
     if(session.mode !== 'flick') spawnTrackTarget();
 
     updateHudModeLabel();
+    usesPointerFallback = false;
+    canvas.classList.remove('freeAim');
+    requestGamePointerLock();
     session.state = 'countdown';
     runCountdown(3, ()=>{
-      canvas.requestPointerLock();
+      if(!isLocked && !usesPointerFallback){
+        pauseSession(true);
+        return;
+      }
       sndGo();
       session.state = 'playing';
       session.lastTs = performance.now();
@@ -789,9 +987,17 @@
     setTimeout(()=> runCountdown(n-1, done), 700);
   }
 
-  function pauseSession(){
+  function pauseSession(lockFailed){
     session.state = 'paused';
-    // A tela preta de pause foi removida para permitir tirar prints limpos.
+    overlay.style.display = 'flex';
+    pauseIcon.style.display = lockFailed ? 'none' : 'block';
+    countdownNum.style.display = 'none';
+    overlayTitle.style.display = 'block';
+    overlaySub.style.display = 'block';
+    overlayTitle.textContent = lockFailed ? 'Captura do ponteiro bloqueada' : 'Treino pausado';
+    overlaySub.textContent = lockFailed
+      ? 'Clique aqui para tentar novamente.'
+      : 'Clique para continuar · Esc para libertar o ponteiro';
   }
   function hidePauseOverlay(){ overlay.style.display = 'none'; }
   function resumeSession(){

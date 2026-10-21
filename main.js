@@ -1,7 +1,9 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Tray, Menu, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, Tray, Menu, safeStorage, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const os = require('os');
+const { execFile } = require('child_process');
 const { setSaturation, cleanup } = require('./saturation');
 const { uIOhook } = require('uiohook-napi');
 
@@ -10,9 +12,173 @@ let currentMouseBind = null;
 let tray = null;
 let minimizeToTray = false;
 let licenseIsActive = false;
+let valorantPriorityTimer = null;
+const fivemCpuSamples = new Map();
 
 const licenseConfigPath = path.join(__dirname, 'license-config.json');
 const getLicenseStatePath = () => path.join(app.getPath('userData'), 'license-state.dat');
+const valorantCloseableApps = new Set(['chrome', 'msedge', 'firefox', 'brave', 'opera', 'Spotify', 'OneDrive']);
+
+function checkWindowsProcess(processName) {
+  return new Promise((resolve, reject) => {
+    execFile('tasklist.exe', ['/FI', `IMAGENAME eq ${processName}.exe`, '/FO', 'CSV', '/NH'], { windowsHide: true }, (error, stdout) => {
+      if (error) {
+        reject(new Error(`Não foi possível verificar o estado de ${processName}: ${error.message}`));
+        return;
+      }
+      resolve(stdout.split(/\r?\n/).some(line => line.toLowerCase().startsWith(`"${processName.toLowerCase()}.exe"`)));
+    });
+  });
+}
+
+async function getValorantStatus() {
+  const [riotClientRunning, valorantRunning] = await Promise.all([
+    checkWindowsProcess('RiotClientServices'),
+    checkWindowsProcess('VALORANT-Win64-Shipping')
+  ]);
+  return { riotClientRunning, valorantRunning };
+}
+
+function requestCloseSelectedApps(processNames) {
+  const selectedApps = processNames.filter(name => valorantCloseableApps.has(name));
+  if (selectedApps.length === 0) return Promise.resolve();
+
+  const powershellNames = selectedApps.map(name => `'${name}'`).join(', ');
+  const script = `$names = @(${powershellNames}); Get-Process -Name $names -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | ForEach-Object { [void]$_.CloseMainWindow() }`;
+  return new Promise((resolve, reject) => {
+    execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { windowsHide: true }, error => {
+      if (error) reject(new Error(`Não foi possível pedir o fecho das aplicações selecionadas: ${error.message}`));
+      else resolve();
+    });
+  });
+}
+
+function readFiveMHardwareSensors() {
+  const script = [
+    "$games = @(Get-Process -Name 'FiveM','FiveM_GTAProcess' -ErrorAction SilentlyContinue | Select-Object ProcessName,Id,CPU,WorkingSet64)",
+    "$zones = @()",
+    "try { $zones = @(Get-CimInstance -Namespace root/wmi -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction Stop | Select-Object InstanceName,CurrentTemperature) } catch {}",
+    "[pscustomobject]@{ processes = $games; thermalZones = $zones } | ConvertTo-Json -Compress -Depth 3"
+  ].join('; ');
+
+  return new Promise((resolve, reject) => {
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', script],
+      { windowsHide: true, timeout: 10000, maxBuffer: 1024 * 1024 },
+      (error, stdout) => {
+        if (error) {
+          reject(new Error(`Não foi possível ler as métricas do FiveM: ${error.message}`));
+          return;
+        }
+        try {
+          resolve(JSON.parse(stdout.trim()));
+        } catch (parseError) {
+          reject(new Error(`A resposta de métricas do Windows era inválida: ${parseError.message}`));
+        }
+      }
+    );
+  });
+}
+
+ipcMain.handle('fivem:get-metrics', async () => {
+  if (!licenseIsActive) return { success: false, message: 'Ativa a licença para consultar as métricas.' };
+
+  try {
+    const now = Date.now();
+    const data = await readFiveMHardwareSensors();
+    const processes = Array.isArray(data.processes) ? data.processes : data.processes ? [data.processes] : [];
+    const activePids = new Set(processes.map(process => Number(process.Id)));
+    const processMetrics = processes.map(process => {
+      const pid = Number(process.Id);
+      const cpuSeconds = Number(process.CPU) || 0;
+      const previous = fivemCpuSamples.get(pid);
+      const elapsedMs = previous ? now - previous.sampledAt : 0;
+      const cpuPercent = previous && elapsedMs > 0
+        ? Math.max(0, ((cpuSeconds - previous.cpuSeconds) * 1000 / elapsedMs / os.cpus().length) * 100)
+        : null;
+
+      fivemCpuSamples.set(pid, { cpuSeconds, sampledAt: now });
+      return {
+        name: String(process.ProcessName || ''),
+        memoryBytes: Number(process.WorkingSet64) || 0,
+        cpuPercent: cpuPercent === null ? null : Math.min(100, cpuPercent)
+      };
+    });
+    for (const pid of fivemCpuSamples.keys()) {
+      if (!activePids.has(pid)) fivemCpuSamples.delete(pid);
+    }
+
+    const thermalZones = Array.isArray(data.thermalZones)
+      ? data.thermalZones
+      : data.thermalZones ? [data.thermalZones] : [];
+    const temperatures = thermalZones
+      .map(zone => (Number(zone.CurrentTemperature) / 10) - 273.15)
+      .filter(value => Number.isFinite(value) && value >= 0 && value <= 120);
+
+    const totalMemory = os.totalmem();
+    const availableMemory = os.freemem();
+    return {
+      success: true,
+      sampledAt: now,
+      systemMemory: {
+        totalBytes: totalMemory,
+        usedBytes: totalMemory - availableMemory,
+        usedPercent: Math.round(((totalMemory - availableMemory) / totalMemory) * 100)
+      },
+      processes: processMetrics,
+      thermal: temperatures.length ? { minC: Math.min(...temperatures), maxC: Math.max(...temperatures) } : null
+    };
+  } catch (error) {
+    console.error('Falha ao consultar métricas do FiveM:', error);
+    return { success: false, message: error.message };
+  }
+});
+
+function monitorValorantPriority(webContents) {
+  if (valorantPriorityTimer) clearInterval(valorantPriorityTimer);
+  let attempts = 0;
+  valorantPriorityTimer = setInterval(async () => {
+    attempts += 1;
+    if (webContents.isDestroyed()) {
+      clearInterval(valorantPriorityTimer);
+      valorantPriorityTimer = null;
+      return;
+    }
+
+    try {
+      const status = await getValorantStatus();
+      if (status.valorantRunning) {
+        clearInterval(valorantPriorityTimer);
+        valorantPriorityTimer = null;
+        execFile(
+          'powershell.exe',
+          ['-NoProfile', '-NonInteractive', '-Command', "$game = Get-Process -Name 'VALORANT-Win64-Shipping' -ErrorAction Stop; $game.PriorityClass = 'High'"],
+          { windowsHide: true },
+          error => {
+            if (webContents.isDestroyed()) return;
+            if (error) {
+              webContents.send('valorant:priority-result', { success: false, message: `O jogo abriu, mas não foi possível alterar a prioridade: ${error.message}` });
+            } else {
+              webContents.send('valorant:priority-result', { success: true, message: 'Prioridade alta aplicada ao VALORANT.' });
+            }
+          }
+        );
+        return;
+      }
+    } catch (error) {
+      console.error('Falha ao verificar VALORANT para ajustar a prioridade:', error);
+    }
+
+    if (attempts >= 24) {
+      clearInterval(valorantPriorityTimer);
+      valorantPriorityTimer = null;
+      if (!webContents.isDestroyed()) {
+        webContents.send('valorant:priority-result', { success: false, message: 'Não foi possível detetar o VALORANT para ajustar a prioridade.' });
+      }
+    }
+  }, 5000);
+}
 
 function getLicenseConfig() {
   try {
@@ -126,16 +292,31 @@ async function checkSavedLicense() {
   if (!state) return { valid: false, status: 'activation_required', message: 'Introduz a tua chave de licença para ativar este computador.' };
 
   const result = await validateLicenseKey(state.licenseKey, state.deviceId);
+  if (result.valid && (!state.displayName || !state.displayName.trim())) {
+    return { ...result, valid: false, status: 'profile_required', message: 'Introduz o nome que queres mostrar no perfil.' };
+  }
   licenseIsActive = result.valid === true;
-  return result;
+  return { ...result, displayName: state.displayName };
 }
 
 ipcMain.handle('license:check', checkSavedLicense);
 
-ipcMain.handle('license:activate', async (_event, licenseKey) => {
+function normalizeDisplayName(value) {
+  if (typeof value !== 'string') return null;
+  const displayName = value.trim().replace(/\s+/g, ' ');
+  if (!displayName || [...displayName].length > 32 || /[\u0000-\u001f\u007f]/.test(displayName)) return null;
+  return displayName;
+}
+
+ipcMain.handle('license:activate', async (_event, activation = {}) => {
   licenseIsActive = false;
+  const licenseKey = activation && typeof activation === 'object' ? activation.licenseKey : null;
+  const displayName = normalizeDisplayName(activation && typeof activation === 'object' ? activation.displayName : null);
   if (typeof licenseKey !== 'string' || licenseKey.length > 128) {
     return { valid: false, status: 'invalid_key', message: 'Introduz uma chave de licença válida.' };
+  }
+  if (!displayName) {
+    return { valid: false, status: 'invalid_name', message: 'Introduz um nome com até 32 caracteres.' };
   }
   if (!getLicenseConfig()) {
     return { valid: false, status: 'configuration_missing', message: 'A validação ainda não está configurada. Preenche license-config.json e publica a função validate-license do Supabase.' };
@@ -157,12 +338,46 @@ ipcMain.handle('license:activate', async (_event, licenseKey) => {
   if (!result.valid) return result;
 
   try {
-    saveLicenseState({ licenseKey: licenseKey.trim().toUpperCase(), deviceId });
+    saveLicenseState({ licenseKey: licenseKey.trim().toUpperCase(), deviceId, displayName });
     licenseIsActive = true;
-    return result;
+    return { ...result, displayName };
   } catch (error) {
     console.error('Falha ao guardar a licença:', error);
     return { valid: false, status: 'storage_error', message: `A licença foi validada, mas não pôde ser guardada: ${error.message}` };
+  }
+});
+
+ipcMain.handle('license:set-display-name', async (_event, requestedName) => {
+  licenseIsActive = false;
+  const displayName = normalizeDisplayName(requestedName);
+  if (!displayName) {
+    return { valid: false, status: 'invalid_name', message: 'Introduz um nome com até 32 caracteres.' };
+  }
+  if (!safeStorage.isEncryptionAvailable()) {
+    return { valid: false, status: 'secure_storage_unavailable', message: 'O armazenamento seguro do Windows não está disponível.' };
+  }
+
+  let state;
+  try {
+    state = readLicenseState();
+  } catch (error) {
+    console.error(error);
+    return { valid: false, status: 'storage_error', message: error.message };
+  }
+  if (!state) {
+    return { valid: false, status: 'activation_required', message: 'Introduz primeiro a chave de licença.' };
+  }
+
+  const result = await validateLicenseKey(state.licenseKey, state.deviceId);
+  if (!result.valid) return result;
+
+  try {
+    saveLicenseState({ ...state, displayName });
+    licenseIsActive = true;
+    return { ...result, displayName };
+  } catch (error) {
+    console.error('Falha ao guardar o nome do perfil:', error);
+    return { valid: false, status: 'storage_error', message: `Não foi possível guardar o nome: ${error.message}` };
   }
 });
 
@@ -223,6 +438,38 @@ ipcMain.on('set-min-tray', (event, enabled) => {
   minimizeToTray = enabled;
 });
 
+ipcMain.handle('valorant:status', async () => {
+  if (!licenseIsActive) return { success: false, message: 'Ativa a licença para consultar o estado do jogo.' };
+  try {
+    return { success: true, ...await getValorantStatus() };
+  } catch (error) {
+    console.error('Falha ao consultar o estado do VALORANT:', error);
+    return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle('valorant:launch', async (event, options = {}) => {
+  if (!licenseIsActive) return { success: false, message: 'Ativa a licença para abrir o jogo.' };
+  const selectedApps = Array.isArray(options.closeApps)
+    ? options.closeApps.filter(name => typeof name === 'string' && valorantCloseableApps.has(name))
+    : [];
+
+  try {
+    await requestCloseSelectedApps(selectedApps);
+    await shell.openExternal('com.riotgames.launcher://launch-product=valorant&launch-patchline=live');
+    if (options.highPriority === true) monitorValorantPriority(event.sender);
+    return {
+      success: true,
+      message: options.highPriority === true
+        ? 'A abertura do VALORANT foi pedida ao Riot Client. A prioridade será ajustada se o jogo for detetado.'
+        : 'A abertura do VALORANT foi pedida ao Riot Client.'
+    };
+  } catch (error) {
+    console.error('Falha ao abrir o VALORANT:', error);
+    return { success: false, message: `Não foi possível abrir o VALORANT: ${error.message}` };
+  }
+});
+
 ipcMain.on('window-min', (event) => {
   const webContents = event.sender;
   const win = BrowserWindow.fromWebContents(webContents);
@@ -244,53 +491,74 @@ ipcMain.on('window-close', (event) => {
   }
 });
 
-ipcMain.on('launch-fivem', (event, options = {}) => {
-  if (!licenseIsActive) return;
-  const { exec } = require('child_process');
-  const fs = require('fs');
-  
+ipcMain.handle('launch-fivem', async (event, options = {}) => {
+  if (!licenseIsActive) return { success: false, message: 'Ativa a licença antes de iniciar o FiveM.' };
+
   const localAppData = process.env.LOCALAPPDATA;
+  if (!localAppData) return { success: false, message: 'Não foi possível encontrar a pasta local de aplicações do Windows.' };
+
   const fivemPath = path.join(localAppData, 'FiveM', 'FiveM.exe');
-  
-  if (options.clearCache) {
-    const dataPath = path.join(localAppData, 'FiveM', 'FiveM.app', 'data');
-    const foldersToRemove = ['cache', 'server-cache', 'server-cache-priv'];
-    foldersToRemove.forEach(folder => {
-      const folderPath = path.join(dataPath, folder);
-      try {
-        if (fs.existsSync(folderPath)) {
-          fs.rmSync(folderPath, { recursive: true, force: true });
-        }
-      } catch (err) {
-        console.error("Erro ao limpar cache: ", err);
+  const completedSteps = [];
+
+  try {
+    if (options.closeApps === true) {
+      await requestCloseSelectedApps(['chrome', 'msedge', 'firefox', 'opera', 'brave', 'Spotify', 'OneDrive']);
+      completedSteps.push('Foi pedido o fecho normal das aplicações selecionadas.');
+    }
+
+    if (options.clearCache === true) {
+      const dataPath = path.join(localAppData, 'FiveM', 'FiveM.app', 'data');
+      for (const folder of ['cache', 'server-cache', 'server-cache-priv']) {
+        const folderPath = path.join(dataPath, folder);
+        if (fs.existsSync(folderPath)) fs.rmSync(folderPath, { recursive: true, force: true });
       }
-    });
-  }
+      completedSteps.push('Cache local do FiveM limpa.');
+    }
 
-  if (options.closeApps) {
-    const appsToKill = ['chrome', 'msedge', 'firefox', 'opera', 'brave', 'Spotify', 'OneDrive'];
-    appsToKill.forEach(app => {
-      exec(`taskkill /F /IM ${app}.exe /T`, () => {});
-    });
-  }
-
-  if (options.flushDns) {
-    exec('ipconfig /flushdns');
-  }
-  
-  if (fs.existsSync(fivemPath)) {
-    exec(`explorer.exe "${fivemPath}"`);
-  } else {
-    exec(`explorer.exe "fivem://"`);
-  }
-
-  if (options.highPriority) {
-    // Aguarda um tempo para os processos subirem e altera a prioridade
-    setTimeout(() => {
-      exec(`powershell -Command "Get-Process FiveM, FiveM_GTAProcess -ErrorAction SilentlyContinue | ForEach-Object { $_.PriorityClass = 'High' }"`, (err, stdout, stderr) => {
-        if (err) console.error("Erro ao mudar prioridade: ", err);
+    if (options.flushDns === true) {
+      await new Promise((resolve, reject) => {
+        execFile('ipconfig.exe', ['/flushdns'], { windowsHide: true }, error => {
+          if (error) reject(new Error(`Não foi possível limpar a cache DNS: ${error.message}`));
+          else resolve();
+        });
       });
-    }, 12000); // Aguarda 12s pro jogo iniciar
+      completedSteps.push('Cache DNS limpa.');
+    }
+
+    if (fs.existsSync(fivemPath)) {
+      const openError = await shell.openPath(fivemPath);
+      if (openError) throw new Error(`Não foi possível abrir o FiveM: ${openError}`);
+    } else {
+      await shell.openExternal('fivem://');
+    }
+    completedSteps.push('Pedido de abertura do FiveM enviado.');
+
+    if (options.highPriority === true) {
+      const sender = event.sender;
+      setTimeout(() => {
+        execFile(
+          'powershell.exe',
+          ['-NoProfile', '-NonInteractive', '-Command', "$games = Get-Process -Name 'FiveM','FiveM_GTAProcess' -ErrorAction SilentlyContinue; if (-not $games) { exit 2 }; $games | ForEach-Object { $_.PriorityClass = 'High' }"],
+          { windowsHide: true },
+          error => {
+            if (sender.isDestroyed()) return;
+            sender.send('fivem:priority-result', {
+              success: !error,
+              message: error
+                ? 'O FiveM abriu, mas não foi possível aplicar prioridade alta. Confirma se o jogo já iniciou.'
+                : 'Prioridade alta aplicada ao processo do FiveM.'
+            });
+          }
+        );
+      }, 12000);
+      completedSteps.push('A prioridade alta será tentada depois de o jogo iniciar.');
+    }
+
+    return { success: true, message: completedSteps.join(' ') };
+  } catch (error) {
+    console.error('Falha ao preparar o FiveM:', error);
+    const completedMessage = completedSteps.length ? ` Já concluído: ${completedSteps.join(' ')}` : '';
+    return { success: false, message: `${error.message}${completedMessage}` };
   }
 });
 
@@ -566,6 +834,7 @@ ipcMain.on('revert-keyboard-tweaks', async (event) => {
 });
 
 app.on('before-quit', () => {
+  if (valorantPriorityTimer) clearInterval(valorantPriorityTimer);
   globalShortcut.unregisterAll();
   uIOhook.stop();
   cleanup();

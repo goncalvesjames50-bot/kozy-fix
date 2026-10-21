@@ -1,6 +1,6 @@
 # Configuração de licenças do PrecisionFix
 
-O MVP valida as chaves online através de uma Supabase Edge Function. Cada licença pode ser associada a um computador e não tem expiração automática. A chave fica guardada localmente com a encriptação segura do Windows; no Supabase é guardado apenas o seu SHA-256.
+O MVP valida as chaves online através de uma Supabase Edge Function. Cada licença pode ser associada a um computador e não tem expiração automática. A chave fica guardada localmente com a encriptação segura do Windows; no Supabase é guardado apenas o seu SHA-256. Ao ativar, cada pessoa escolhe também um nome de perfil, guardado de forma encriptada apenas nesse computador e não enviado ao Supabase.
 
 ## 1. Criar o projeto Supabase
 
